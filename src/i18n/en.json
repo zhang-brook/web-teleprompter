@@ -72,7 +72,7 @@
   "speech.family.cyrillic": "Russian",
   "speech.family.latin": "English / Latin",
   "speech.langCheckMixedTitle": "Mixed-language script detected",
-  "speech.langCheckMixed": "Due to browser limitations, the on-device speech recognition model can only recognize a single language at a time and cannot handle mixed content such as Chinese + English. We recommend using a single-language script, or recording foreign-language portions separately.",
+  "speech.langCheckMixed": "Due to browser limitations, the on-device speech recognition model can only recognize a single language at a time and cannot handle mixed content such as Chinese + English. We recommend using a single-language script.",
   "speech.langCheckMismatchTitle": "Recognition language may not match",
   "speech.langCheckMismatch": "The script's main language is \"{detected}\", which differs from the selected recognition language \"{selected}\". Recognition may be inaccurate. Please go back and choose the correct language, or continue anyway.",
   "action.backToSelect": "Back to select",
