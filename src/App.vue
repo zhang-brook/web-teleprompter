@@ -154,6 +154,18 @@ function stop() {
   background: var(--bg-panel);
   min-height: 0;
 }
+@media (min-width: 768px) {
+  .sidebar {
+    transition: flex-basis 0.2s ease, width 0.2s ease, padding 0.2s ease;
+  }
+  .sidebar:not(.open) {
+    flex-basis: 0;
+    width: 0;
+    padding: 0;
+    border-right: none;
+    overflow: hidden;
+  }
+}
 .stage {
   position: relative;
   flex: 1 1 auto;
