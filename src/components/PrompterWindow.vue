@@ -126,6 +126,7 @@ watch(
     const { min, max } = scrollBounds()
     const lineY = viewportRef.value.clientHeight * state.readLine
     targetScroll.value = Math.min(max, Math.max(min, el.offsetTop - lineY + el.offsetHeight / 2))
+    console.log('[SCROLL:targetScroll] matchedNorm=%d orig=%d el.offsetTop=%d targetScroll=%d (bounds=[%d,%d])', state.matchedNorm, orig, el.offsetTop, targetScroll.value, min, max)
   },
 )
 

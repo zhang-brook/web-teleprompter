@@ -97,6 +97,7 @@ export function alignForward(
   const maxSkip = opts.maxSkip ?? Math.max(8, Math.floor(recognizedNorm.length * 0.15))
   const startMin = Math.max(0, fromNorm - back)
   const startMax = Math.min(normScript.length, fromNorm + forward)
+  console.log('[MATCH:alignForward] fromNorm=%d recNorm.len=%d scriptNorm.len=%d back=%d forward=%d searchWindow=[%d,%d]', fromNorm, recognizedNorm.length, normScript.length, back, forward, startMin, startMax)
 
   let bestStart = fromNorm
   let bestLen = 0
@@ -112,8 +113,12 @@ export function alignForward(
 
   // 至少匹配到一定比例才推进（短句则至少 2 个字符），过滤识别噪声与脚本外内容
   const minLen = Math.max(2, Math.floor(recognizedNorm.length * 0.6))
+  console.log('[MATCH:alignForward] bestStart=%d bestLen=%d bestEnd=%d minLen=%d', bestStart, bestLen, bestEnd, minLen)
   if (bestLen >= minLen) {
-    return Math.min(normScript.length, bestEnd)
+    const r = Math.min(normScript.length, bestEnd)
+    console.log('[MATCH:alignForward] -> RETURN advanced=%d (推进)', r)
+    return r
   }
+  console.log('[MATCH:alignForward] -> RETURN stayed=%d (bestLen<minLen，原地不动)', fromNorm)
   return fromNorm
 }

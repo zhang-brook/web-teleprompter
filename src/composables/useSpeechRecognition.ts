@@ -85,37 +85,44 @@ export function useSpeechRecognition() {
     rec.lang = lang || 'zh-CN'
 
     rec.onstart = () => {
-      console.log('onstart')
+      console.log('[SR:onstart] 识别会话已启动（每次重启都会触发）')
       // 识别引擎真正就绪，结束加载态
       endLoading()
     }
 
     rec.onresult = (e: SpeechRecognitionEventLike) => {
-      console.log('onresult', e)
+      console.log('[SR:onresult] resultIndex=%d results.length=%d', e.resultIndex, e.results.length)
       // 每次事件都拿到本次识别会话“到目前为止”的完整文本（所有结果，final + interim 按序拼接）。
       // 浏览器在静音/气口后会结束会话并重启，此时 results 自动从头开始，
       // 因此这里无需手动维护累计文本——从 results 重新拼接即可得到当前会话的完整内容，
       // 重启后会自动以新会话内容继续在脚本当前位置之后对齐。
       let text = ''
       let interim = ''
+      const chunks: string[] = []
       for (let i = 0; i < e.results.length; i++) {
         const res = e.results[i]!
         const txt = res[0]!.transcript
+        const tag = res.isFinal ? 'FINAL' : 'interim'
+        chunks.push(`#${i}[${tag}]="${txt}"`)
         text += txt
         if (!res.isFinal) interim += txt
       }
+      // 关键诊断：把每个 result chunk 的 isFinal/transcript 都打出来，
+      // 可以确认“拼接逻辑”是否丢失了前面已 final 的内容，以及 interim 是否正确。
+      console.log('[SR:onresult] chunks: %s', chunks.join(' '))
+      console.log('[SR:onresult] -> fullText="%s" interim="%s"', text, interim)
       interimText.value = interim
       if (text) onTextCb?.(text)
     }
 
     rec.onerror = (e: { error?: string }) => {
-      console.log('onerror', e)
+      console.log('[SR:onerror] error=%s', e.error)
       error.value = e.error || 'speech-error'
       hideLoading()
     }
 
     rec.onend = () => {
-      console.log('onend')
+      console.log('[SR:onend] listening=%s（若为 true 将延迟重启会话）', listening.value)
       // 仍在口播中：浏览器在静音/气口后会结束识别，需要重新启动才能继续跟随。
       // 关键：在 onend 内【同步】调用 start 在 Chrome 中会抛 InvalidStateError，
       // 被 catch 吞掉后识别会彻底终止、之后不再跟随。故延迟到下一轮事件循环再启动。

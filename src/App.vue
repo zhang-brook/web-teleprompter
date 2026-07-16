@@ -31,11 +31,15 @@ watch(speech.error, (v) => {
 // 在脚本当前位置附近的受限窗口内对齐，推进最新朗读到的位置。
 function handleText(text: string) {
   const recNorm = normalizeText(text)
+  console.log('[APP:handleText] raw.len=%d recNorm.len=%d recNorm="%s" scriptNorm.len=%d', text.length, recNorm.length, recNorm, state.normInfo.norm.length)
   if (!recNorm) return
-  state.matchedNorm = alignForward(state.normInfo.norm, state.matchedNorm, recNorm, {
+  const before = state.matchedNorm
+  const after = alignForward(state.normInfo.norm, before, recNorm, {
     back: 40,
     forward: 300,
   })
+  console.log('[APP:handleText] matchedNorm %d -> %d (%s)', before, after, after > before ? 'ADVANCED' : 'STAYED')
+  state.matchedNorm = after
 }
 
 function start() {
