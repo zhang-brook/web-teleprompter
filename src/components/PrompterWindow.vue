@@ -1,11 +1,26 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { state, transformStyle } from '../store'
 
 const emit = defineEmits<{ (e: 'stop'): void }>()
 
+const rootRef = ref<HTMLElement | null>(null)
 const viewportRef = ref<HTMLElement | null>(null)
 const contentRef = ref<HTMLElement | null>(null)
+
+// 窗口模式：浮窗按比例/坐标；窗口全屏与屏幕全屏填满父容器
+const pwStyle = computed(() => {
+  if (state.windowMode === 'float') {
+    return {
+      left: state.win.x + 'px',
+      top: state.win.y + 'px',
+      width: state.win.w + 'px',
+      height: state.win.h + 'px',
+    }
+  }
+  return { left: '0', top: '0', width: '100%', height: '100%' }
+})
+const pwClass = computed(() => 'pw mode-' + state.windowMode)
 
 const chars = ref<{ i: number; c: string }[]>([])
 
@@ -207,6 +222,7 @@ function startDragReadLine(e: PointerEvent) {
 
 // ===== 拖拽移动 / 缩放 =====
 function startDrag(e: PointerEvent) {
+  if (state.windowMode !== 'float') return
   e.preventDefault()
   const sx = e.clientX
   const sy = e.clientY
@@ -244,8 +260,28 @@ function startResize(e: PointerEvent) {
   window.addEventListener('pointerup', up)
 }
 
+// 屏幕全屏：进入时请求真实全屏，退出时回到窗口模式
+function syncFullscreen() {
+  if (typeof document === 'undefined') return
+  if (state.windowMode === 'screen') {
+    const el = rootRef.value
+    if (el && !document.fullscreenElement) {
+      el.requestFullscreen?.().catch(() => {})
+    }
+  } else if (document.fullscreenElement) {
+    document.exitFullscreen?.().catch(() => {})
+  }
+}
+watch(() => state.windowMode, syncFullscreen)
+
 onMounted(() => {
   nextTick(collectSpans)
+  syncFullscreen()
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && state.windowMode === 'screen') {
+      state.windowMode = 'window'
+    }
+  })
   const vp = viewportRef.value!
   vp.addEventListener('wheel', onWheel, { passive: false })
   vp.addEventListener('touchstart', onTouchStart, { passive: false })
@@ -273,14 +309,9 @@ function stop() {
 
 <template>
   <div
-    class="pw"
-    :style="{
-      left: state.win.x + 'px',
-      top: state.win.y + 'px',
-      width: state.win.w + 'px',
-      height: state.win.h + 'px',
-      background: state.background,
-    }"
+    ref="rootRef"
+    :class="pwClass"
+    :style="{ ...pwStyle, background: state.background }"
   >
     <div class="pw-header" @pointerdown="startDrag">
       <span class="pw-title">提词器</span>
@@ -320,7 +351,7 @@ function stop() {
       </div>
     </div>
 
-    <div class="pw-resize" @pointerdown="startResize" title="拖拽缩放"></div>
+    <div v-if="state.windowMode === 'float'" class="pw-resize" @pointerdown="startResize" title="拖拽缩放"></div>
   </div>
 </template>
 
@@ -334,6 +365,20 @@ function stop() {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.12);
   user-select: none;
+}
+.pw.mode-window,
+.pw.mode-screen {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+.pw.mode-screen {
+  position: fixed;
+  z-index: 9999;
 }
 .pw-header {
   height: 36px;

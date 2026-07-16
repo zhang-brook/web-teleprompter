@@ -153,8 +153,13 @@ function onImportFile(e: Event) {
 
     <section class="sec">
       <h3>漂浮窗</h3>
-      <button class="wide" @click="resetWin">重置窗口位置/大小</button>
-      <p class="hint">口播时可直接拖拽标题栏移动，拖右下角缩放。</p>
+      <div class="seg">
+        <button :class="{ active: state.windowMode === 'float' }" @click="state.windowMode = 'float'">浮窗</button>
+        <button :class="{ active: state.windowMode === 'window' }" @click="state.windowMode = 'window'">窗口全屏</button>
+        <button :class="{ active: state.windowMode === 'screen' }" @click="state.windowMode = 'screen'">屏幕全屏</button>
+      </div>
+      <button class="wide" style="margin-top: 8px" @click="resetWin">重置窗口位置/大小</button>
+      <p class="hint">浮窗模式可拖拽标题栏移动、拖右下角缩放；窗口全屏填满主区域；屏幕全屏进入浏览器全屏。</p>
     </section>
 
     <section class="sec">

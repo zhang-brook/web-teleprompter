@@ -54,6 +54,9 @@ export const state = reactive({
   // 主题：dark / light / system
   theme: 'system' as 'dark' | 'light' | 'system',
 
+  // 窗口模式：float=浮窗，window=窗口全屏（填满主区域），screen=屏幕全屏
+  windowMode: 'float' as 'float' | 'window' | 'screen',
+
   // 变换：水平翻转、垂直翻转、任意角度旋转
   flipH: false,
   flipV: false,
