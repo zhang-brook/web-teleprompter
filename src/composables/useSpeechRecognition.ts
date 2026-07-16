@@ -41,7 +41,7 @@ export function useSpeechRecognition() {
   const available = ref(supported)
 
   let rec: SpeechRecognitionLike | null = null
-  let onFinalCb: ((text: string) => void) | null = null
+  let onTextCb: ((text: string) => void) | null = null
   let restartTimer: number | null = null
   let loadStart = 0 // 开始加载的时间戳（用于保证最短展示时长）
   let minLoadTimer: number | null = null // 保证最短展示时长的定时器
@@ -76,7 +76,7 @@ export function useSpeechRecognition() {
       error.value = t('speech.unsupported')
       return
     }
-    onFinalCb = cb
+    onTextCb = cb
     clearRestart()
     const Ctor = (window.SpeechRecognition || window.webkitSpeechRecognition)!
     rec = new Ctor()
@@ -92,16 +92,20 @@ export function useSpeechRecognition() {
 
     rec.onresult = (e: SpeechRecognitionEventLike) => {
       console.log('onresult', e)
-      let finalChunk = ''
+      // 每次事件都拿到本次识别会话“到目前为止”的完整文本（所有结果，final + interim 按序拼接）。
+      // 浏览器在静音/气口后会结束会话并重启，此时 results 自动从头开始，
+      // 因此这里无需手动维护累计文本——从 results 重新拼接即可得到当前会话的完整内容，
+      // 重启后会自动以新会话内容继续在脚本当前位置之后对齐。
+      let text = ''
       let interim = ''
-      for (let i = e.resultIndex; i < e.results.length; i++) {
+      for (let i = 0; i < e.results.length; i++) {
         const res = e.results[i]!
         const txt = res[0]!.transcript
-        if (res.isFinal) finalChunk += txt
-        else interim += txt
+        text += txt
+        if (!res.isFinal) interim += txt
       }
       interimText.value = interim
-      if (finalChunk) onFinalCb?.(finalChunk)
+      if (text) onTextCb?.(text)
     }
 
     rec.onerror = (e: { error?: string }) => {

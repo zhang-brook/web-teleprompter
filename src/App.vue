@@ -27,20 +27,15 @@ watch(speech.error, (v) => {
   }
 })
 
-// 已用于对齐的识别文本累计量，保证只对新内容做增量对齐
-let recNormAcc = ''
-
-function handleFinal(text: string) {
+// 语音识别回调：收到“当前会话完整文本（final+interim）”，
+// 在脚本当前位置附近的受限窗口内对齐，推进最新朗读到的位置。
+function handleText(text: string) {
   const recNorm = normalizeText(text)
-  if (recNorm.length > recNormAcc.length && recNorm.startsWith(recNormAcc)) {
-    // 仅对齐新增部分（识别引擎返回增量文本时）
-    const delta = recNorm.slice(recNormAcc.length)
-    state.matchedNorm = alignForward(state.normInfo.norm, state.matchedNorm, delta)
-  } else {
-    // 无法增量（识别引擎重置/回传累计文本）时，从当前位置稍前处整体重对齐
-    state.matchedNorm = alignForward(state.normInfo.norm, Math.max(0, state.matchedNorm - 24), recNorm)
-  }
-  recNormAcc = recNorm
+  if (!recNorm) return
+  state.matchedNorm = alignForward(state.normInfo.norm, state.matchedNorm, recNorm, {
+    back: 40,
+    forward: 300,
+  })
 }
 
 function start() {
@@ -56,19 +51,17 @@ function start() {
   }
   state.matchedNorm = 0
   state.interimText = ''
-  recNormAcc = ''
   panelShownBeforeStart = showPanel.value
   state.running = true
   state.paused = false
   showPanel.value = false // 开始后自动隐藏设置面板，进入纯净口播视图
-  if (state.mode === 'speech') speech.start(handleFinal, state.recLang)
+  if (state.mode === 'speech') speech.start(handleText, state.recLang)
 }
 
 function stop() {
   state.running = false
   state.paused = false
   speech.stop()
-  recNormAcc = ''
   state.matchedNorm = 0
   state.interimText = ''
   // 停止前若面板处于隐藏状态（通常由开始自动隐藏所致），则还原到开始前的展示状态；
