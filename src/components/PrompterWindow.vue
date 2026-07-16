@@ -34,6 +34,18 @@ let prevIdx = -1
 
 const WHEEL_MAX_STEP = 80 // 单次滚轮最多移动像素，避免一滚就飞很远找不到位置
 
+// 滚动范围：围绕朗读线对称，保证首尾文字都能越过朗读线
+// 下限为负：内容顶部可滚到朗读线下方（首行文字完全到线下面）
+// 上限超过内容底部：内容底部可滚到朗读线上方（尾行文字完全过线才结束）
+function scrollBounds() {
+  const vh = viewportRef.value?.clientHeight ?? 0
+  const ch = contentRef.value?.scrollHeight ?? 0
+  const lineY = vh * state.readLine
+  const min = -lineY
+  const max = Math.max(min, ch - lineY)
+  return { min, max }
+}
+
 // 监听脚本变化，重建字符与 span 缓存
 watch(
   () => state.script,
@@ -98,9 +110,9 @@ watch(
     const orig = state.normInfo.normToOrig[Math.max(0, ni)] ?? 0
     const el = spans.value[orig]
     if (!el) return
-    const vh = viewportRef.value.clientHeight
-    const lineY = vh * state.readLine
-    targetScroll.value = Math.max(0, el.offsetTop - lineY + el.offsetHeight / 2)
+    const { min, max } = scrollBounds()
+    const lineY = viewportRef.value.clientHeight * state.readLine
+    targetScroll.value = Math.min(max, Math.max(min, el.offsetTop - lineY + el.offsetHeight / 2))
   },
 )
 
@@ -109,12 +121,21 @@ watch(
   () => state.running,
   (running) => {
     if (running) {
-      autoScroll.value = 0
       userOffset.value = 0
       userOffsetTarget.value = 0
       targetScroll.value = 0
       resetHighlight()
-      nextTick(collectSpans)
+      // 从朗读线下方开始：自动滚动基准设为下限，使首行文字初始就在朗读线之下
+      nextTick(() => {
+        collectSpans()
+        autoScroll.value = scrollBounds().min
+      })
+    } else {
+      // 停止后归零，便于未开始时手动浏览也能滚到朗读线上下两端
+      autoScroll.value = 0
+      userOffset.value = 0
+      userOffsetTarget.value = 0
+      targetScroll.value = 0
     }
   },
 )
@@ -126,9 +147,8 @@ let last = performance.now()
 function tick(now: number) {
   const dt = Math.min(64, now - last)
   last = now
+  const { min, max } = scrollBounds()
   const vh = viewportRef.value?.clientHeight ?? 1
-  const ch = contentRef.value?.scrollHeight ?? 0
-  const max = Math.max(0, ch - vh)
 
   if (state.running && !state.paused) {
     if (state.mode === 'fixed') {
@@ -139,17 +159,17 @@ function tick(now: number) {
     }
   }
   if (autoScroll.value > max) autoScroll.value = max
-  if (autoScroll.value < 0) autoScroll.value = 0
+  if (autoScroll.value < min) autoScroll.value = min
 
   // 鼠标/触摸偏移缓动逼近目标值（不直接跳变）
   const ke = 1 - Math.exp(-dt / 140)
   userOffset.value += (userOffsetTarget.value - userOffset.value) * ke
   if (userOffset.value > max) userOffset.value = max
-  if (userOffset.value < 0) userOffset.value = 0
+  if (userOffset.value < min) userOffset.value = min
 
   let total = autoScroll.value + userOffset.value
   if (total > max) total = max
-  if (total < 0) total = 0
+  if (total < min) total = min
 
   if (contentRef.value) {
     contentRef.value.style.transform = `translateY(${-total}px)`
@@ -171,12 +191,9 @@ function tick(now: number) {
 
 // ===== 鼠标滚轮 / 触摸额外滚动（偏移保持，未开始时也可滚动浏览）=====
 function clampOffsetTarget() {
-  const vp = viewportRef.value
-  const ct = contentRef.value
-  if (!vp || !ct) return
-  const max = Math.max(0, ct.scrollHeight - vp.clientHeight)
+  const { min, max } = scrollBounds()
   if (userOffsetTarget.value > max) userOffsetTarget.value = max
-  if (userOffsetTarget.value < 0) userOffsetTarget.value = 0
+  if (userOffsetTarget.value < min) userOffsetTarget.value = min
 }
 
 function onWheel(e: WheelEvent) {
