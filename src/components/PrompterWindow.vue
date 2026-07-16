@@ -74,7 +74,7 @@ function applyHighlight(newIdx: number) {
   prevIdx = newIdx
 }
 
-// 语音匹配位置变化时，更新目标滚动位置（居中）
+// 语音匹配位置变化时，更新目标滚动位置（对齐到朗读线）
 watch(
   () => state.matchedNorm,
   () => {
@@ -84,7 +84,8 @@ watch(
     const el = spans.value[orig]
     if (!el) return
     const vh = viewportRef.value.clientHeight
-    targetScroll.value = Math.max(0, el.offsetTop - vh / 2 + el.offsetHeight / 2)
+    const lineY = vh * state.readLine
+    targetScroll.value = Math.max(0, el.offsetTop - lineY + el.offsetHeight / 2)
   },
 )
 
@@ -145,7 +146,8 @@ function tick(now: number) {
     const ni = Math.min(state.matchedNorm, state.normInfo.normToOrig.length - 1)
     idx = state.normInfo.normToOrig[Math.max(0, ni)] ?? 0
   } else {
-    idx = charIndexAt(total + vh / 2)
+    const lineY = vh * state.readLine
+    idx = charIndexAt(total + lineY)
   }
   applyHighlight(idx)
 
@@ -172,6 +174,24 @@ function onTouchMove(e: TouchEvent) {
   const val = touchStartOffset + (touchStartY - e.touches[0]!.clientY)
   userOffset.value = val
   userOffsetTarget.value = val
+}
+
+// 拖拽朗读线调整其位置（视口高度比例）
+function startDragReadLine(e: PointerEvent) {
+  e.preventDefault()
+  e.stopPropagation()
+  const vp = viewportRef.value!
+  const rect = vp.getBoundingClientRect()
+  const move = (ev: PointerEvent) => {
+    const y = ev.clientY - rect.top
+    state.readLine = Math.max(0.05, Math.min(0.95, y / rect.height))
+  }
+  const up = () => {
+    window.removeEventListener('pointermove', move)
+    window.removeEventListener('pointerup', up)
+  }
+  window.addEventListener('pointermove', move)
+  window.addEventListener('pointerup', up)
 }
 
 // ===== 拖拽移动 / 缩放 =====
@@ -279,6 +299,14 @@ function stop() {
       <div v-if="state.mode === 'speech' && state.interimText" class="pw-interim">
         {{ state.interimText }}
       </div>
+      <div
+        class="pw-readline"
+        :style="{ top: state.readLine * 100 + '%' }"
+        @pointerdown="startDragReadLine"
+        title="拖动调整朗读线位置"
+      >
+        <span class="pw-readline-grip"></span>
+      </div>
     </div>
 
     <div class="pw-resize" @pointerdown="startResize" title="拖拽缩放"></div>
@@ -361,6 +389,27 @@ function stop() {
   color: #ffd54f;
   background: rgba(0, 0, 0, 0.45);
   pointer-events: none;
+}
+.pw-readline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 2px solid rgba(255, 213, 79, 0.85);
+  pointer-events: none;
+  z-index: 5;
+}
+.pw-readline-grip {
+  position: absolute;
+  right: 10px;
+  top: -7px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffd54f;
+  pointer-events: auto;
+  cursor: ns-resize;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
 }
 .pw-resize {
   position: absolute;

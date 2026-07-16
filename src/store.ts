@@ -48,6 +48,9 @@ export const state = reactive({
   background: '#000000',
   lineHeight: 1.6,
 
+  // 朗读线位置（视口高度的比例，0~1）
+  readLine: 0.4,
+
   // 变换：水平翻转、垂直翻转、任意角度旋转
   flipH: false,
   flipV: false,
@@ -79,6 +82,7 @@ export const usable: (keyof typeof state)[] = [
   'color',
   'background',
   'lineHeight',
+  'readLine',
   'flipH',
   'flipV',
   'rotation',

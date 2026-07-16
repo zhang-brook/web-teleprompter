@@ -81,6 +81,15 @@ function resetWin() {
     </section>
 
     <section class="sec">
+      <h3>朗读线</h3>
+      <div class="field">
+        <label>位置（距顶部）：{{ Math.round(state.readLine * 100) }}%</label>
+        <input type="range" min="5" max="95" step="1" v-model.number="state.readLine" />
+      </div>
+      <p class="hint">当前阅读位置会对齐到该线；口播时也可直接拖动悬浮窗中的朗读线上下调整。</p>
+    </section>
+
+    <section class="sec">
       <h3>翻转 / 旋转</h3>
       <div class="flips">
         <button :class="{ active: state.flipH }" @click="state.flipH = !state.flipH">水平翻转</button>
