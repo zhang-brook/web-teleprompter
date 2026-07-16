@@ -26,57 +26,63 @@ function defaultWin(): WinGeom {
   return { x: Math.round(vw / 2 - 300), y: 90, w: 600, h: Math.min(420, vh - 180) }
 }
 
+// 真正的默认值工厂：每次调用返回一份全新的默认状态。
+// 注意：必须从这份常量取默认值，绝不能从当前 state 读取，否则“恢复默认设置”会失效。
+function makeDefaults() {
+  return {
+    // 脚本文本
+    script: '',
+
+    // 滚动模式：fixed=固定速度；speech=语音跟随
+    mode: 'fixed' as Mode,
+
+    // 运行 / 暂停
+    running: false,
+    paused: false,
+
+    // 固定速度（像素/秒）
+    speed: 60,
+
+    // 外观
+    fontSize: 40,
+    fontFamily: 'system-ui, "PingFang SC", "Microsoft YaHei", sans-serif',
+    color: '#ffffff',
+    background: '#000000',
+    lineHeight: 1.6,
+
+    // 英文单词是否允许在行尾断开（true=可拆开放两行；false=整词换行）
+    breakWords: false,
+
+    // 朗读线位置（视口高度的比例，0~1）
+    readLine: 0.4,
+
+    // 主题：dark / light / system
+    theme: 'system' as 'dark' | 'light' | 'system',
+
+    // 窗口模式：float=浮窗，window=窗口全屏（填满主区域），screen=屏幕全屏
+    windowMode: 'float' as 'float' | 'window' | 'screen',
+
+    // 变换：水平翻转、垂直翻转、任意角度旋转
+    flipH: false,
+    flipV: false,
+    rotation: 0,
+
+    // 漂浮窗几何
+    win: defaultWin(),
+
+    // 归一化脚本（用于语音匹配）
+    normInfo: { norm: '', normToOrig: [], origToNorm: [] } as NormInfo,
+
+    // 语音已匹配到的归一化位置
+    matchedNorm: 0,
+
+    // 语音识别临时文本（用于界面展示）
+    interimText: '',
+  }
+}
+
 // 完整应用状态（含运行时字段，不全部参与配置持久化）
-export const state = reactive({
-  // 脚本文本
-  script: '',
-
-  // 滚动模式：fixed=固定速度；speech=语音跟随
-  mode: 'fixed' as Mode,
-
-  // 运行 / 暂停
-  running: false,
-  paused: false,
-
-  // 固定速度（像素/秒）
-  speed: 60,
-
-  // 外观
-  fontSize: 40,
-  fontFamily: 'system-ui, "PingFang SC", "Microsoft YaHei", sans-serif',
-  color: '#ffffff',
-  background: '#000000',
-  lineHeight: 1.6,
-
-  // 英文单词是否允许在行尾断开（true=可拆开放两行；false=整词换行）
-  breakWords: false,
-
-  // 朗读线位置（视口高度的比例，0~1）
-  readLine: 0.4,
-
-  // 主题：dark / light / system
-  theme: 'system' as 'dark' | 'light' | 'system',
-
-  // 窗口模式：float=浮窗，window=窗口全屏（填满主区域），screen=屏幕全屏
-  windowMode: 'float' as 'float' | 'window' | 'screen',
-
-  // 变换：水平翻转、垂直翻转、任意角度旋转
-  flipH: false,
-  flipV: false,
-  rotation: 0,
-
-  // 漂浮窗几何
-  win: defaultWin(),
-
-  // 归一化脚本（用于语音匹配）
-  normInfo: { norm: '', normToOrig: [], origToNorm: [] } as NormInfo,
-
-  // 语音已匹配到的归一化位置
-  matchedNorm: 0,
-
-  // 语音识别临时文本（用于界面展示）
-  interimText: '',
-})
+export const state = reactive(makeDefaults())
 
 /**
  * 可序列化配置：从 state 中提取需要保存/导出的用户设置字段。
@@ -103,7 +109,7 @@ export const usable: (keyof typeof state)[] = [
 export type AppConfig = Pick<typeof state, (typeof usable)[number]>
 
 export function defaultConfig(): AppConfig {
-  const base = { ...state }
+  const base = makeDefaults()
   const cfg = {} as AppConfig
   for (const k of usable) {
     // 深拷贝窗口几何，避免引用同一对象
@@ -135,6 +141,10 @@ export function applyConfig(cfg: Partial<AppConfig>) {
     if (k in cfg && cfg[k] !== undefined) {
       if (k === 'win') {
         state.win = { ...(cfg.win as WinGeom) }
+      } else if (k === 'readLine') {
+        // 朗读线位置以比例(0~1)存储，兼容旧配置中误存的百分比数值
+        const r = cfg[k] as unknown as number
+        state.readLine = Math.max(0.05, Math.min(0.95, r > 1 ? r / 100 : r))
       } else {
         // @ts-expect-error 动态赋值
         state[k] = cfg[k]
@@ -145,7 +155,9 @@ export function applyConfig(cfg: Partial<AppConfig>) {
 }
 
 export function resetConfig() {
-  applyConfig(defaultConfig())
+  // 把整个状态重置为真正的默认值，确保包括 windowMode、运行/暂停等所有字段都被还原。
+  Object.assign(state, makeDefaults())
+  rebuildNorm()
 }
 
 // 导出当前配置为 JSON 字符串
