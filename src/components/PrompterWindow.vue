@@ -32,7 +32,10 @@ const targetScroll = ref(0) // 语音模式目标位置
 const spans = ref<HTMLElement[]>([])
 let prevIdx = -1
 
-const WHEEL_MAX_STEP = 80 // 单次滚轮最多移动像素，避免一滚就飞很远找不到位置
+// 单次滚轮最多移动像素（可在设置中调整），避免一滚就飞很远找不到位置
+function wheelStep(): number {
+  return Math.max(1, state.wheelStep || 80)
+}
 
 // 滚动范围：围绕朗读线对称，保证首尾文字都能越过朗读线
 // 下限为负：内容顶部可滚到朗读线下方（首行文字完全到线下面）
@@ -215,7 +218,7 @@ function clampOffsetTarget() {
 function onWheel(e: WheelEvent) {
   e.preventDefault()
   // 归一化不同 deltaMode 的滚动量（像素/行/页），否则 Firefox 等按“行”返回的滚轮
-  // deltaY 只有个位数，乘以 WHEEL_MAX_STEP 截断后几乎不动，表现为“增益没反应”
+  // deltaY 只有个位数，乘以 wheelStep 截断后几乎不动，表现为“增益没反应”
   let d = e.deltaY
   if (e.deltaMode === 1) {
     d *= Math.max(16, state.fontSize * state.lineHeight)
@@ -223,7 +226,8 @@ function onWheel(e: WheelEvent) {
     d *= viewportRef.value?.clientHeight ?? 800
   }
   // 限制单次位移，并累加到目标值由动画循环缓动逼近
-  d = Math.max(-WHEEL_MAX_STEP, Math.min(WHEEL_MAX_STEP, d))
+  const step = wheelStep()
+  d = Math.max(-step, Math.min(step, d))
   userOffsetTarget.value += d
   clampOffsetTarget()
 }
@@ -419,6 +423,12 @@ function stop() {
       </div>
     </div>
 
+    <div
+      v-if="state.windowMode === 'float'"
+      class="pw-drag-handle"
+      @pointerdown="startDrag"
+      title="拖拽移动浮窗"
+    ></div>
     <div v-if="state.windowMode === 'float'" class="pw-resize" @pointerdown="startResize" title="拖拽缩放"></div>
   </div>
 </template>
@@ -544,5 +554,22 @@ function stop() {
   cursor: nwse-resize;
   background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.5) 50%);
   touch-action: none;
+}
+.pw-drag-handle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 56px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: move;
+  touch-action: none;
+  z-index: 6;
+  transition: background 0.15s ease;
+}
+.pw-drag-handle:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 </style>
