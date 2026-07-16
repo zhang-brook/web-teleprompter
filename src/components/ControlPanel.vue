@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { state, rebuildNorm, exportConfig, importConfig, resetConfig } from '../store'
+import { t } from '../i18n'
 
 const fonts = [
-  { label: '系统默认', value: 'system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' },
-  { label: '黑体 / 无衬线', value: '"Microsoft YaHei", "PingFang SC", sans-serif' },
-  { label: '宋体 / 衬线', value: 'SimSun, "Songti SC", serif' },
-  { label: '楷体', value: 'KaiTi, "Kaiti SC", serif' },
-  { label: '等宽', value: '"Cascadia Code", Consolas, monospace' },
+  { tkey: 'font.system', value: 'system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' },
+  { tkey: 'font.sans', value: '"Microsoft YaHei", "PingFang SC", sans-serif' },
+  { tkey: 'font.serif', value: 'SimSun, "Songti SC", serif' },
+  { tkey: 'font.kai', value: 'KaiTi, "Kaiti SC", serif' },
+  { tkey: 'font.mono', value: '"Cascadia Code", Consolas, monospace' },
 ]
 
 function onScriptInput(e: Event) {
@@ -46,7 +47,7 @@ function doExport() {
   a.download = 'teleprompter-config.json'
   a.click()
   URL.revokeObjectURL(url)
-  msg.value = '配置已导出'
+  msg.value = t('msg.exported')
   setTimeout(() => (msg.value = ''), 2500)
 }
 
@@ -61,7 +62,7 @@ function onImportFile(e: Event) {
   const reader = new FileReader()
   reader.onload = () => {
     const ok = importConfig(String(reader.result))
-    msg.value = ok ? '配置已导入' : '导入失败：文件格式不正确'
+    msg.value = ok ? t('msg.imported') : t('msg.importFailed')
     setTimeout(() => (msg.value = ''), 3000)
   }
   reader.readAsText(file)
@@ -72,92 +73,87 @@ function onImportFile(e: Event) {
 <template>
   <div class="panel">
     <section class="sec">
-      <h3>文稿</h3>
+      <h3>{{ t('panel.script') }}</h3>
       <textarea
         class="script"
         :value="state.script"
         @input="onScriptInput"
-        placeholder="在此输入口播文稿……"
+        :placeholder="t('panel.scriptPlaceholder')"
       ></textarea>
-      <p class="hint">
-        也可以直接把本地 .txt 文档拖拽到页面任意位置，自动导入为文稿。
-      </p>
+      <p class="hint">{{ t('panel.scriptHint') }}</p>
     </section>
 
     <section class="sec">
-      <h3>主题</h3>
+      <h3>{{ t('panel.theme') }}</h3>
       <div class="seg">
-        <button :class="{ active: state.theme === 'dark' }" @click="state.theme = 'dark'">深色</button>
-        <button :class="{ active: state.theme === 'light' }" @click="state.theme = 'light'">浅色</button>
-        <button :class="{ active: state.theme === 'system' }" @click="state.theme = 'system'">跟随系统</button>
+        <button :class="{ active: state.theme === 'dark' }" @click="state.theme = 'dark'">{{ t('theme.dark') }}</button>
+        <button :class="{ active: state.theme === 'light' }" @click="state.theme = 'light'">{{ t('theme.light') }}</button>
+        <button :class="{ active: state.theme === 'system' }" @click="state.theme = 'system'">{{ t('theme.system') }}</button>
       </div>
     </section>
 
     <section class="sec">
-      <h3>滚动模式</h3>
+      <h3>{{ t('panel.scrollMode') }}</h3>
       <div class="seg">
         <button :class="{ active: state.mode === 'fixed' }" @click="state.mode = 'fixed'">
-          固定速度
+          {{ t('mode.fixed') }}
         </button>
         <button :class="{ active: state.mode === 'speech' }" @click="state.mode = 'speech'">
-          语音跟随
+          {{ t('mode.speech') }}
         </button>
       </div>
 
       <div v-if="state.mode === 'fixed'" class="field">
-        <label>速度（像素/秒）：{{ state.speed }}</label>
+        <label>{{ t('panel.speed', { value: state.speed }) }}</label>
         <input type="range" min="10" max="400" step="5" v-model.number="state.speed" />
       </div>
 
-      <p v-else class="hint">
-        语音跟随：说出文稿内容，文字会自动滚到当前读到/说到的位置并居中。<br />
-        已自动处理停顿气口与换种表述；可用鼠标滚轮在滚动时上下微调（偏移保持）。
-      </p>
+      <p v-else class="hint">{{ t('panel.speechHint') }}</p>
 
       <div class="field">
-        <label>鼠标滚轮每格移动：{{ state.wheelStep }}px</label>
+        <label>{{ t('panel.wheelStep', { value: state.wheelStep }) }}</label>
         <input type="range" min="10" max="300" step="5" v-model.number="state.wheelStep" />
       </div>
     </section>
 
     <section class="sec">
-      <h3>外观</h3>
+      <h3>{{ t('panel.appearance') }}</h3>
       <div class="field">
-        <label>字体</label>
+        <label>{{ t('panel.font') }}</label>
         <select v-model="state.fontFamily">
-          <option v-for="f in fonts" :key="f.value" :value="f.value">{{ f.label }}</option>
+          <option v-for="f in fonts" :key="f.value" :value="f.value">{{ t(f.tkey) }}</option>
         </select>
       </div>
       <div class="field">
-        <label>字号：{{ state.fontSize }}px</label>
+        <label>{{ t('panel.fontSize', { value: state.fontSize }) }}</label>
         <input type="range" min="16" max="120" step="1" v-model.number="state.fontSize" />
       </div>
       <div class="field row">
-        <label>文字颜色</label>
+        <label>{{ t('panel.textColor') }}</label>
         <input type="color" v-model="state.color" />
-        <label>背景</label>
+        <label>{{ t('panel.background') }}</label>
         <input type="color" v-model="state.background" />
       </div>
       <label class="check">
         <input type="checkbox" v-model="state.breakWords" />
-        英文单词可在行尾断开（拆开放两行）
+        {{ t('panel.breakWords') }}
       </label>
     </section>
 
     <section class="sec">
-      <h3>朗读线</h3>
+      <h3>{{ t('panel.readLine') }}</h3>
       <div class="field">
-        <label>位置（距顶部）：{{ readLinePct }}%</label>
+        <label>{{ t('panel.readLinePos', { value: readLinePct }) }}</label>
         <input type="range" min="5" max="95" step="1" v-model.number="readLinePct" />
       </div>
-      <p class="hint">当前阅读位置会对齐到该线；口播时也可直接拖动悬浮窗中的朗读线上下调整。</p>
+      <p class="hint">{{ t('panel.readLineHint') }}</p>
     </section>
 
     <section class="sec">
-      <h3>翻转 / 旋转</h3>
+      <h3>{{ t('panel.flipRotate') }}</h3>
       <div class="flips">
-        <button :class="{ active: state.flipH }" @click="state.flipH = !state.flipH">水平翻转</button>
-        <button :class="{ active: state.flipV }" @click="state.flipV = !state.flipV">垂直翻转</button>
+        <button :class="{ active: state.flipH }" @click="state.flipH = !state.flipH">{{ t('flip.h') }}</button>
+        <button :class="{ active: state.flipV }" @click="state.flipV = !state.flipV">{{ t('flip.v') }}</button>
       </div>
       <div class="angles">
         <button :class="{ active: state.rotation === 0 }" @click="state.rotation = 0">0°</button>
@@ -166,29 +162,29 @@ function onImportFile(e: Event) {
         <button :class="{ active: state.rotation === 270 }" @click="state.rotation = 270">270°</button>
       </div>
       <div class="field">
-        <label>任意角度：{{ state.rotation }}°</label>
+        <label>{{ t('panel.angle', { value: state.rotation }) }}</label>
         <input type="range" min="0" max="359" step="1" v-model.number="state.rotation" />
       </div>
     </section>
 
     <section class="sec">
-      <h3>漂浮窗</h3>
+      <h3>{{ t('panel.floatWindow') }}</h3>
       <div class="seg">
-        <button :class="{ active: state.windowMode === 'float' }" @click="state.windowMode = 'float'">浮窗</button>
-        <button :class="{ active: state.windowMode === 'window' }" @click="state.windowMode = 'window'">窗口全屏</button>
-        <button :class="{ active: state.windowMode === 'screen' }" @click="state.windowMode = 'screen'">屏幕全屏</button>
+        <button :class="{ active: state.windowMode === 'float' }" @click="state.windowMode = 'float'">{{ t('windowMode.float') }}</button>
+        <button :class="{ active: state.windowMode === 'window' }" @click="state.windowMode = 'window'">{{ t('windowMode.window') }}</button>
+        <button :class="{ active: state.windowMode === 'screen' }" @click="state.windowMode = 'screen'">{{ t('windowMode.screen') }}</button>
       </div>
-      <button class="wide" style="margin-top: 8px" @click="resetWin">重置窗口位置/大小</button>
-      <p class="hint">浮窗模式可拖拽标题栏移动、拖右下角缩放；窗口全屏填满主区域；屏幕全屏进入浏览器全屏。</p>
+      <button class="wide" style="margin-top: 8px" @click="resetWin">{{ t('panel.resetWin') }}</button>
+      <p class="hint">{{ t('panel.floatHint') }}</p>
     </section>
 
     <section class="sec">
-      <h3>配置</h3>
+      <h3>{{ t('panel.config') }}</h3>
       <div class="row2">
-        <button class="wide" @click="doExport">导出配置</button>
-        <button class="wide" @click="triggerImport">导入配置</button>
+        <button class="wide" @click="doExport">{{ t('config.export') }}</button>
+        <button class="wide" @click="triggerImport">{{ t('config.import') }}</button>
       </div>
-      <button class="wide" style="margin-top: 8px" @click="resetConfig">恢复默认设置</button>
+      <button class="wide" style="margin-top: 8px" @click="resetConfig">{{ t('config.reset') }}</button>
       <input
         ref="fileInput"
         type="file"

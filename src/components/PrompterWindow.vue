@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { state, transformStyle } from '../store'
+import { t } from '../i18n'
 
 const emit = defineEmits<{ (e: 'stop'): void }>()
 
@@ -382,13 +383,13 @@ function stop() {
     :style="{ ...pwStyle, background: state.background }"
   >
     <div class="pw-header" @pointerdown="startDrag">
-      <span class="pw-title">提词器</span>
-      <div v-if="state.windowMode === 'float'" class="pw-drag-handle" @pointerdown="startDrag" title="拖拽移动浮窗"></div>
+      <span class="pw-title">{{ t('prompter.title') }}</span>
+      <div v-if="state.windowMode === 'float'" class="pw-drag-handle" @pointerdown="startDrag" :title="t('prompter.dragHandle')"></div>
       <div class="pw-ctrls">
         <button v-if="state.running" @pointerdown.stop @click="togglePause">
-          {{ state.paused ? '继续' : '暂停' }}
+          {{ state.paused ? t('action.resume') : t('action.pause') }}
         </button>
-        <button v-if="state.running" @pointerdown.stop @click="stop">停止</button>
+        <button v-if="state.running" @pointerdown.stop @click="stop">{{ t('action.stop') }}</button>
       </div>
     </div>
 
@@ -414,7 +415,7 @@ function stop() {
           class="pw-readline"
           :style="{ top: state.readLine * 100 + '%' }"
           @pointerdown="startDragReadLine"
-          title="拖动调整朗读线位置"
+          :title="t('prompter.readLineGrip')"
         >
           <span class="pw-readline-grip"></span>
         </div>
@@ -424,7 +425,7 @@ function stop() {
       </div>
     </div>
 
-    <div v-if="state.windowMode === 'float'" class="pw-resize" @pointerdown="startResize" title="拖拽缩放"></div>
+    <div v-if="state.windowMode === 'float'" class="pw-resize" @pointerdown="startResize" :title="t('prompter.resize')"></div>
   </div>
 </template>
 

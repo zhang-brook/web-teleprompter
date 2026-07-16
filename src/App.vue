@@ -5,6 +5,7 @@ import PrompterWindow from './components/PrompterWindow.vue'
 import { state, initPersist, initTheme, rebuildNorm } from './store'
 import { useSpeechRecognition } from './composables/useSpeechRecognition'
 import { normalizeText, alignForward } from './utils/match'
+import { i18nState, setLocale, t, locales, type Locale } from './i18n'
 
 const speech = useSpeechRecognition()
 const showPanel = ref(typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
@@ -20,7 +21,7 @@ watch(speech.interimText, (v) => {
 })
 watch(speech.error, (v) => {
   if (v) {
-    toast.value = '语音识别：' + v
+    toast.value = t('speech.errorPrefix') + v
     setTimeout(() => (toast.value = ''), 4000)
   }
 })
@@ -43,12 +44,12 @@ function handleFinal(text: string) {
 
 function start() {
   if (!state.script.trim()) {
-    toast.value = '请先在设置中输入文稿'
+    toast.value = t('toast.enterScriptFirst')
     setTimeout(() => (toast.value = ''), 3000)
     return
   }
   if (state.mode === 'speech' && !speech.available.value) {
-    toast.value = '当前浏览器不支持语音识别，请使用 Chrome / Edge 访问'
+    toast.value = t('toast.speechUnsupported')
     setTimeout(() => (toast.value = ''), 4000)
     return
   }
@@ -76,6 +77,10 @@ function stop() {
   }
 }
 
+function onLocaleChange(e: Event) {
+  setLocale((e.target as HTMLSelectElement).value as Locale)
+}
+
 // ===== 拖入 txt 文档导入文稿 =====
 const isDragging = ref(false)
 
@@ -101,7 +106,7 @@ function onDrop(e: DragEvent) {
   const file = e.dataTransfer?.files?.[0]
   if (!file) return
   if (!isTextFile(file)) {
-    toast.value = '仅支持导入 .txt 文本文档'
+    toast.value = t('toast.onlyTxt')
     setTimeout(() => (toast.value = ''), 3000)
     return
   }
@@ -109,11 +114,11 @@ function onDrop(e: DragEvent) {
   reader.onload = () => {
     state.script = String(reader.result ?? '')
     rebuildNorm()
-    toast.value = '已从 ' + file.name + ' 导入文稿'
+    toast.value = t('toast.importedFrom', { name: file.name })
     setTimeout(() => (toast.value = ''), 3000)
   }
   reader.onerror = () => {
-    toast.value = '导入失败：无法读取文件'
+    toast.value = t('toast.readFailed')
     setTimeout(() => (toast.value = ''), 3000)
   }
   reader.readAsText(file)
@@ -125,13 +130,16 @@ function onDrop(e: DragEvent) {
     <header class="topbar">
       <div class="brand">
         <img class="brand-logo" src="/logo.svg" alt="Logo" />
-        <span>网页提词器</span>
+        <span>{{ t('app.name') }}</span>
       </div>
       <div class="actions">
-        <button class="primary" @click="start" :disabled="state.running">开始</button>
-        <button @click="stop" :disabled="!state.running">停止</button>
+        <button class="primary" @click="start" :disabled="state.running">{{ t('action.start') }}</button>
+        <button @click="stop" :disabled="!state.running">{{ t('action.stop') }}</button>
+        <select class="lang" :value="i18nState.locale" @change="onLocaleChange">
+          <option v-for="l in locales" :key="l.code" :value="l.code">{{ l.label }}</option>
+        </select>
         <button class="ghost" @click="showPanel = !showPanel">
-          {{ showPanel ? '隐藏设置' : '设置' }}
+          {{ showPanel ? t('action.hideSettings') : t('action.settings') }}
         </button>
       </div>
     </header>
@@ -147,7 +155,7 @@ function onDrop(e: DragEvent) {
     </div>
 
     <div v-if="isDragging" class="drop-overlay">
-      <div class="drop-hint">拖入 .txt 文档以导入文稿</div>
+      <div class="drop-hint">{{ t('drop.hint') }}</div>
     </div>
   </div>
 </template>
@@ -207,6 +215,15 @@ function onDrop(e: DragEvent) {
 .actions button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+.lang {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-card);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
 }
 .body {
   position: relative;

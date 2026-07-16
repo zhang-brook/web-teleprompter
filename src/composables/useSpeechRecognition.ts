@@ -1,4 +1,5 @@
 import { ref, onUnmounted } from 'vue'
+import { t } from '../i18n'
 
 // Web Speech API 最小类型声明（标准 lib 未包含）
 interface SpeechRecognitionResultLike {
@@ -50,7 +51,7 @@ export function useSpeechRecognition() {
 
   function start(cb: (text: string) => void) {
     if (!supported) {
-      error.value = '当前浏览器不支持语音识别（建议使用 Chrome / Edge）'
+      error.value = t('speech.unsupported')
       return
     }
     onFinalCb = cb
