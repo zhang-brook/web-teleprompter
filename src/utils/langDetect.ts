@@ -101,10 +101,33 @@ export function analyzeScript(text: string): ScriptAnalysis {
   }
 }
 
+// 单个语言在文稿中所占比例（percent 为 0-100 的整数）
+export interface LangPercent {
+  family: ScriptFamily
+  percent: number
+}
+
 export type SpeechLangCheck =
   | { type: 'ok' }
-  | { type: 'mixed'; families: ScriptFamily[] }
+  | { type: 'mixed'; families: ScriptFamily[]; breakdown: LangPercent[] }
   | { type: 'mismatch'; detected: ScriptFamily; selected: ScriptFamily }
+
+// 依据字符统计计算各文字家族占比（仅统计有效字符：字母/汉字/假名等，忽略标点数字空白）。
+// 传入 only 时仅返回该集合内的家族，否则返回所有出现过的家族；结果按占比降序。
+export function computeLangPercents(
+  a: ScriptAnalysis,
+  only?: ScriptFamily[],
+): LangPercent[] {
+  if (a.total === 0) return []
+  const list: LangPercent[] = FAMILIES.filter((f) => (only ? only.includes(f) : counts0(a, f) > 0))
+    .map((f) => ({ family: f as ScriptFamily, percent: Math.round((a.counts[f] / a.total) * 100) }))
+    .sort((x, y) => y.percent - x.percent)
+  return list
+}
+
+function counts0(a: ScriptAnalysis, f: Exclude<ScriptFamily, 'unknown'>): number {
+  return a.counts[f]
+}
 
 // 在“语音跟随”开始前检查文稿语言是否合理：
 //  - 大段混合语言 -> 'mixed'
@@ -113,7 +136,7 @@ export type SpeechLangCheck =
 export function checkSpeechLanguage(text: string, recLang: string): SpeechLangCheck {
   const a = analyzeScript(text)
   if (a.mixed) {
-    return { type: 'mixed', families: a.mixedFamilies }
+    return { type: 'mixed', families: a.mixedFamilies, breakdown: computeLangPercents(a, a.mixedFamilies) }
   }
   if (a.detected === 'unknown') return { type: 'ok' }
   const selected = recLangFamilyOf(recLang)

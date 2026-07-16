@@ -22,7 +22,14 @@ const langCheck = ref<SpeechLangCheck | null>(null)
 const langCheckInfo = computed(() => {
   const c = langCheck.value
   if (!c || c.type === 'ok') return null
-  if (c.type === 'mixed') return { kind: 'mixed' as const }
+  if (c.type === 'mixed')
+    return {
+      kind: 'mixed' as const,
+      breakdown: c.breakdown.map((b) => ({
+        label: t('speech.family.' + b.family),
+        percent: b.percent,
+      })),
+    }
   return {
     kind: 'mismatch' as const,
     detected: t('speech.family.' + c.detected),
@@ -195,7 +202,18 @@ function onDrop(e: DragEvent) {
       <div class="lang-check-card">
         <h3 v-if="langCheckInfo.kind === 'mixed'">{{ t('speech.langCheckMixedTitle') }}</h3>
         <h3 v-else>{{ t('speech.langCheckMismatchTitle') }}</h3>
-        <p v-if="langCheckInfo.kind === 'mixed'">{{ t('speech.langCheckMixed') }}</p>
+        <template v-if="langCheckInfo.kind === 'mixed'">
+          <p>{{ t('speech.langCheckMixed') }}</p>
+          <ul class="lang-breakdown">
+            <li v-for="b in langCheckInfo.breakdown" :key="b.label">
+              <span class="lang-breakdown-name">{{ b.label }}</span>
+              <span class="lang-breakdown-bar">
+                <span class="lang-breakdown-fill" :style="{ width: b.percent + '%' }"></span>
+              </span>
+              <span class="lang-breakdown-pct">{{ b.percent }}%</span>
+            </li>
+          </ul>
+        </template>
         <p v-else>
           {{ t('speech.langCheckMismatch', { detected: langCheckInfo.detected, selected: langCheckInfo.selected }) }}
         </p>
@@ -390,6 +408,42 @@ function onDrop(e: DragEvent) {
   margin: 0;
   font-size: 13px;
   line-height: 1.6;
+  color: var(--text-dim);
+}
+.lang-breakdown {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lang-breakdown li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text);
+}
+.lang-breakdown-name {
+  flex: 0 0 88px;
+}
+.lang-breakdown-bar {
+  flex: 1 1 auto;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+.lang-breakdown-fill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+}
+.lang-breakdown-pct {
+  flex: 0 0 44px;
+  text-align: right;
   color: var(--text-dim);
 }
 .lang-check-actions {
