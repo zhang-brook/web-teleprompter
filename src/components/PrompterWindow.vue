@@ -567,4 +567,7 @@ function stop() {
 .pw-header:hover .pw-drag-handle {
   background: rgba(255, 255, 255, 0.4);
 }
+.pw-header:active .pw-drag-handle {
+  background: rgba(255, 255, 255, 0.6);
+}
 </style>
