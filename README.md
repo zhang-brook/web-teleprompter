@@ -31,6 +31,7 @@ No install. No sign-up. Just open it in a browser and start reading.
   pnpm build      # type-check + build to dist/
   ```
 - **Deploy your own GitHub Pages** — The repo ships with a GitHub Actions workflow. Push to the `main` branch and it builds and publishes automatically, no extra setup.
+  > ⚠️ **Before your first deploy**: Go to **Settings → Pages → Build and deployment → Source** and switch the deploy source to **GitHub Actions** manually. Otherwise the first Actions publish fails with: `Create Pages site failed. Error: Resource not accessible by integration`
 
 ---
 

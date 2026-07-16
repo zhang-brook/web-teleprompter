@@ -6,7 +6,7 @@
 适合直播带货、录课教学、短视频口播、演讲汇报等一切需要「照稿说」的场景。
 纯网页、零安装，打开浏览器就能用。
 
-> 🔗 [在线演示](https://zhang-brook.github.io/web-teleprompter/) 💾 [项目仓库](https://github.com/zhang-brook/web-teleprompter)
+> 🔗 [在线演示](https://zhang-brook.github.io/web-teleprompter/) &nbsp;·&nbsp; 💾 [项目仓库](https://github.com/zhang-brook/web-teleprompter)
 
 ---
 
@@ -31,6 +31,7 @@
   pnpm build      # 类型检查 + 构建到 dist/
   ```
 - **部署到自己的 GitHub Pages**：仓库已内置 GitHub Actions 工作流，把代码推送到 `main` 分支即可自动构建并发布，无需任何额外配置。
+  > ⚠️ **首次部署前必看**：请先进入仓库 **Settings → Pages → Build and deployment → Source**，手动把部署源切到 **GitHub Actions**，否则 Actions 首次发布时会报错 `Create Pages site failed. Error: Resource not accessible by integration`
 
 ---
 
