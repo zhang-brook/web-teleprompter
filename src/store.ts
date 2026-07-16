@@ -48,6 +48,9 @@ export const state = reactive({
   background: '#000000',
   lineHeight: 1.6,
 
+  // 英文单词是否允许在行尾断开（true=可拆开放两行；false=整词换行）
+  breakWords: false,
+
   // 朗读线位置（视口高度的比例，0~1）
   readLine: 0.4,
 
@@ -88,6 +91,7 @@ export const usable: (keyof typeof state)[] = [
   'color',
   'background',
   'lineHeight',
+  'breakWords',
   'readLine',
   'theme',
   'flipH',

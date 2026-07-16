@@ -356,6 +356,7 @@ function stop() {
             fontSize: state.fontSize + 'px',
             fontFamily: state.fontFamily,
             lineHeight: state.lineHeight,
+            wordBreak: state.breakWords ? 'break-word' : 'normal',
           }"
         >
           <span v-for="ch in chars" :key="ch.i" :data-i="ch.i">{{ ch.c }}</span>
@@ -446,7 +447,7 @@ function stop() {
 .pw-content {
   position: relative;
   white-space: pre-wrap;
-  word-break: break-word;
+  word-break: normal;
   padding: 12px 16px;
   will-change: transform;
   min-height: 100%;

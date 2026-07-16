@@ -122,6 +122,10 @@ function onImportFile(e: Event) {
         <label>背景</label>
         <input type="color" v-model="state.background" />
       </div>
+      <label class="check">
+        <input type="checkbox" v-model="state.breakWords" />
+        英文单词可在行尾断开（拆开放两行）
+      </label>
     </section>
 
     <section class="sec">
@@ -227,6 +231,20 @@ function onImportFile(e: Event) {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+.check input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 .field label {
   font-size: 13px;
