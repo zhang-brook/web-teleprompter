@@ -34,13 +34,13 @@ function detectLocale(): Locale {
   } catch {
     /* 忽略读取失败 */
   }
-  const nav = typeof navigator !== 'undefined' ? navigator.language : 'zh-CN'
+  const nav = typeof navigator !== 'undefined' ? navigator.language : 'en'
   const l = nav.toLowerCase()
   if (l.startsWith('zh')) {
     return l.includes('tw') || l.includes('hk') || l.includes('mo') ? 'zh-TW' : 'zh-CN'
   }
   if (l.startsWith('en')) return 'en'
-  return 'zh-CN'
+  return 'en'
 }
 
 export const i18nState = reactive({
@@ -64,8 +64,8 @@ export function setLocale(locale: Locale) {
 }
 
 export function t(key: string, vars?: Record<string, string | number>): string {
-  const table = tables[i18nState.locale] ?? zhCN
-  let s = table[key] ?? zhCN[key] ?? key
+  const table = tables[i18nState.locale] ?? en
+  let s = table[key] ?? en[key] ?? key
   if (vars) {
     for (const k in vars) {
       s = s.replace(new RegExp('\\{' + k + '\\}', 'g'), String(vars[k]))
