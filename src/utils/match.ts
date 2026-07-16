@@ -44,81 +44,96 @@ export function normalizeText(text: string): string {
 }
 
 /**
- * 模糊对齐：从 script[s] 起，与 r 进行贪心对齐。
- * 遇到不匹配时跳过 script 中的字符（容忍漏读 / 换种表述 / 气口），
- * 但跳过的累计数量不能超过 maxSkip，否则认为该起点无法对齐。
- * 返回：len = 成功匹配的 r 中字符数；end = 匹配结束时在 script 中的下标。
+ * 容错对齐（编辑距离）：把识别文本 r（整段 utterance）对齐进脚本，允许其“头部”落在脚本开头，
+ * 只约束其“结束位置”落在 [fromNorm-back, fromNorm+forward] 窗口内。
+ *
+ * 关键点：onresult 每次拿到的是“到目前为止的完整 utterance”，其头部对应脚本开头，
+ * 而用户当前嘴部位置在 fromNorm 附近。因此头部必须从脚本 0 开始自由匹配，
+ * 只限制“结束位”在本地窗口，避免整段 utterance 因头部落在窗口外而无法对齐（否则读几十字就卡死）。
+ *
+ * 允许三类低代价操作，从而同时容忍：
+ *   - 替换(substitution)：识别错字（如“页”↔“业”、英文整词微差）—— 对应“要兼容错字”。
+ *   - 删除(deletion)：用户漏读 / 跳过了几个字、或识别漏字 —— 对应“跳过几个字也能识别”。
+ *   - 插入(insertion)：识别多读了语气词等填充内容，跳过这些识别字。
+ *
+ * 匹配代价：命中=0，其余三类操作各=1。要求整段对齐代价 <= maxCost 才算“对得上”。
+ * 返回落在窗口内的对齐结束下标（即最新朗读到的位置）；无法在预算内对齐则返回 -1。
  */
-function fuzzyAlign(
+function tolerantAlign(
   script: string,
-  s: number,
+  fromNorm: number,
   r: string,
-  maxSkip: number,
-): { len: number; end: number } {
-  let i = s
-  let j = 0
-  let skip = 0
-  while (i < script.length && j < r.length) {
-    if (script[i] === r[j]) {
-      i++
-      j++
-    } else {
-      // 跳过脚本里的一个字符（说话人换种表述 / 跳过了原词 / 气口）
-      skip++
-      if (skip > maxSkip) break
-      i++
+  back: number,
+  forward: number,
+  maxCost: number,
+): number {
+  const N = script.length
+  const M = r.length
+  if (M === 0) return fromNorm
+  const lo = Math.max(0, fromNorm - back)
+  const hi = Math.min(N, fromNorm + forward)
+  if (lo > hi) return -1
+  // 行范围：结束位置必须在 [lo, hi]；为容纳整段 r（M 列），起始行可早至 0。
+  const rowEnd = Math.min(N, hi + M)
+  const INF = 1e9
+  let prev = new Array(M + 1).fill(INF)
+  prev[0] = 0
+  let bestCost = INF
+  let bestEnd = -1
+  for (let p = 1; p <= rowEnd; p++) {
+    const cur = new Array(M + 1).fill(INF)
+    cur[0] = p // 允许从任意位置开始（头部删除若干 script 字符，对应整段 utterance 的头部在脚本开头）
+    const sc = script[p - 1]!
+    for (let j = 1; j <= M; j++) {
+      const cost = sc === r[j - 1]! ? 0 : 1
+      let v = prev[j - 1]! + cost // 命中 / 替换
+      if (prev[j]! + 1 < v) v = prev[j]! + 1 // 删除 script 字符（漏读/跳过）
+      if (cur[j - 1]! + 1 < v) v = cur[j - 1]! + 1 // 插入（跳过识别多读的字）
+      cur[j] = v
     }
+    // r 已被完整消费且结束位落在本地窗口内：记录最佳结束位置
+    if (p >= lo && p <= hi && cur[M]! <= maxCost) {
+      const c = cur[M]!
+      // 代价最小者优先；平局取距 fromNorm 更近者（避免无谓前跳）；再平局取更小结束位（保守）
+      const d = Math.abs(p - fromNorm)
+      const bd = bestEnd < 0 ? Infinity : Math.abs(bestEnd - fromNorm)
+      if (c < bestCost || (c === bestCost && (d < bd || (d === bd && p < bestEnd)))) {
+        bestCost = c
+        bestEnd = p
+      }
+    }
+    prev = cur
   }
-  return { len: j, end: i }
+  return bestEnd
 }
 
 /**
- * 在 fromNorm 附近、受限的窗口内寻找识别文本 recognizedNorm 的最佳对齐点。
+ * 把识别文本 recognizedNorm（整段 utterance）容错对齐进脚本，
+ * 返回对齐结束处的归一化下标（即最新朗读到的位置）；对不上则原地不动。
  *
- * - back：允许向前回退的归一化字符数（修正前面漏匹配的气口 / 停顿）。
- * - forward：允许向前（用户正在朗读的位置）搜索的归一化字符数。
- *   窗口被严格限制，避免识别到脚本后面某处重复短语时“随机跳远”。
- * - 在候选起点中选取匹配最长者（即识别文本与脚本重合最多的位置）；
- *   平局取起点更靠前者，避免无谓前跳导致画面乱跳。
- *
- * 只有匹配到足够比例（容忍少量识别噪声 / 换表述）才推进，否则原地不动，
- * 防止识别到脚本外内容时乱跳。
- * 返回匹配结束处在 script 中的归一化下标（即最新朗读到的位置）。
+ * - back：允许向前回退的字符数（修正前面漏匹配的气口 / 停顿）。
+ * - forward：允许向前（用户正在朗读的位置）搜索的字符数；窗口严格限制，避免随机跳远。
+ * - maxCostRatio：容错预算占识别长度的比例（替换/删除/插入均计入），越大越能容忍错字与跳读。
  */
 export function alignForward(
   normScript: string,
   fromNorm: number,
   recognizedNorm: string,
-  opts: { back?: number; forward?: number; maxSkip?: number } = {},
+  opts: { back?: number; forward?: number; maxCostRatio?: number } = {},
 ): number {
   if (!recognizedNorm) return fromNorm
   const back = opts.back ?? 40
   const forward = opts.forward ?? 300
-  const maxSkip = opts.maxSkip ?? Math.max(8, Math.floor(recognizedNorm.length * 0.15))
-  const startMin = Math.max(0, fromNorm - back)
-  const startMax = Math.min(normScript.length, fromNorm + forward)
-  console.log('[MATCH:alignForward] fromNorm=%d recNorm.len=%d scriptNorm.len=%d back=%d forward=%d searchWindow=[%d,%d]', fromNorm, recognizedNorm.length, normScript.length, back, forward, startMin, startMax)
+  const maxCostRatio = opts.maxCostRatio ?? 0.35
+  const maxCost = Math.max(2, Math.floor(recognizedNorm.length * maxCostRatio))
+  console.log('[MATCH:alignForward] fromNorm=%d recNorm.len=%d scriptNorm.len=%d back=%d forward=%d endWindow=[%d,%d] maxCost=%d', fromNorm, recognizedNorm.length, normScript.length, back, forward, Math.max(0, fromNorm - back), Math.min(normScript.length, fromNorm + forward), maxCost)
 
-  let bestStart = fromNorm
-  let bestLen = 0
-  let bestEnd = fromNorm
-  for (let s = startMin; s <= startMax; s++) {
-    const { len, end } = fuzzyAlign(normScript, s, recognizedNorm, maxSkip)
-    if (len > bestLen) {
-      bestLen = len
-      bestStart = s
-      bestEnd = end
-    }
+  const end = tolerantAlign(normScript, fromNorm, recognizedNorm, back, forward, maxCost)
+  if (end < 0) {
+    console.log('[MATCH:alignForward] -> RETURN stayed=%d (预算内对不上，原地不动)', fromNorm)
+    return fromNorm
   }
-
-  // 至少匹配到一定比例才推进（短句则至少 2 个字符），过滤识别噪声与脚本外内容
-  const minLen = Math.max(2, Math.floor(recognizedNorm.length * 0.6))
-  console.log('[MATCH:alignForward] bestStart=%d bestLen=%d bestEnd=%d minLen=%d', bestStart, bestLen, bestEnd, minLen)
-  if (bestLen >= minLen) {
-    const r = Math.min(normScript.length, bestEnd)
-    console.log('[MATCH:alignForward] -> RETURN advanced=%d (推进)', r)
-    return r
-  }
-  console.log('[MATCH:alignForward] -> RETURN stayed=%d (bestLen<minLen，原地不动)', fromNorm)
-  return fromNorm
+  const r = Math.min(normScript.length, end)
+  console.log('[MATCH:alignForward] -> RETURN advanced=%d (推进, cost内)', r)
+  return r
 }
