@@ -115,7 +115,10 @@ function onDrop(e: DragEvent) {
 <template>
   <div class="app" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
     <header class="topbar">
-      <div class="brand">网页提词器</div>
+      <div class="brand">
+        <img class="brand-logo" src="/logo.svg" alt="Logo" />
+        <span>网页提词器</span>
+      </div>
       <div class="actions">
         <button class="primary" @click="start" :disabled="state.running">开始</button>
         <button @click="stop" :disabled="!state.running">停止</button>
@@ -161,8 +164,16 @@ function onDrop(e: DragEvent) {
   border-bottom: 1px solid var(--border);
 }
 .brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 700;
   font-size: 15px;
+}
+.brand-logo {
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 .actions {
   display: flex;
