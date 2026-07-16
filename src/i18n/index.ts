@@ -64,8 +64,8 @@ export function setLocale(locale: Locale) {
 }
 
 export function t(key: string, vars?: Record<string, string | number>): string {
-  const table = tables[i18nState.locale] ?? en
-  let s = table[key] ?? en[key] ?? key
+  const table: Dict = tables[i18nState.locale] ?? en
+  let s = table[key] ?? (en as Dict)[key] ?? key
   if (vars) {
     for (const k in vars) {
       s = s.replace(new RegExp('\\{' + k + '\\}', 'g'), String(vars[k]))
