@@ -383,6 +383,7 @@ function stop() {
   >
     <div class="pw-header" @pointerdown="startDrag">
       <span class="pw-title">提词器</span>
+      <div v-if="state.windowMode === 'float'" class="pw-drag-handle" @pointerdown="startDrag" title="拖拽移动浮窗"></div>
       <div class="pw-ctrls">
         <button v-if="state.running" @pointerdown.stop @click="togglePause">
           {{ state.paused ? '继续' : '暂停' }}
@@ -423,12 +424,6 @@ function stop() {
       </div>
     </div>
 
-    <div
-      v-if="state.windowMode === 'float'"
-      class="pw-drag-handle"
-      @pointerdown="startDrag"
-      title="拖拽移动浮窗"
-    ></div>
     <div v-if="state.windowMode === 'float'" class="pw-resize" @pointerdown="startResize" title="拖拽缩放"></div>
   </div>
 </template>
@@ -557,9 +552,9 @@ function stop() {
 }
 .pw-drag-handle {
   position: absolute;
-  top: 0;
+  top: 18px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   width: 56px;
   height: 6px;
   border-radius: 6px;
@@ -569,7 +564,7 @@ function stop() {
   z-index: 6;
   transition: background 0.15s ease;
 }
-.pw-drag-handle:hover {
+.pw-header:hover .pw-drag-handle {
   background: rgba(255, 255, 255, 0.4);
 }
 </style>
