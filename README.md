@@ -1,42 +1,85 @@
-# web-teleprompter
+# 网页提词器 · Web Teleprompter
 
-This template should help get you started developing with Vue 3 in Vite.
+把文稿变成一台会自己滚动的提词器：**一边念、它一边滚**，也支持**按固定速度自动滚动**。
+适合直播带货、录课教学、短视频口播、演讲汇报等一切需要「照稿说」的场景。
+纯网页、零安装，打开浏览器就能用。
 
-## Recommended IDE Setup
+> 🔗 在线演示：<https://zhang-brook.github.io/web-teleprompter/>
+> 💾 项目仓库：<https://github.com/zhang-brook/web-teleprompter>
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+---
 
-## Recommended Browser Setup
+## ✨ 亮点功能
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+- **🎙️ 语音跟随滚动**：开口说话，文稿自动滚到你正在读/说的位置并居中。自动处理停顿、换气、甚至换种说法，双手彻底解放，不用碰鼠标键盘。
+- **🔄 任意角度旋转 + 翻转**：支持水平/垂直翻转，以及 0°/90°/180°/270° 一键切换或任意角度微调。无论手机横放、提词器镜像摆放还是侧着读，画面都能转过去对准你。
+- **📏 朗读线 + 滚轮缓动**：一条「当前读到哪」的参考线，可随手拖到舒服的高度；鼠标滚轮滚动带缓动，不会一滚就飞很远找不回来；没开始时也能上下翻看文稿。
+- **🪟 多窗口模式**：浮窗（可拖到任意位置、拉角缩放）、窗口全屏（填满屏幕）、屏幕全屏（进入浏览器全屏，干干净净只剩稿子）。
+- **💾 配置自动保存 + 导入导出**：你的所有设置自动存在本地，刷新不丢；也能一键导出/导入 JSON，换电脑、换浏览器无缝衔接。
+- **📄 拖入 txt 即导入**：把 `.txt` 文稿文件直接拖进页面，立刻变成提词内容，无需复制粘贴。
 
-## Type Support for `.vue` Imports in TS
+---
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+## 🚀 快速开始
 
-## Customize configuration
+- **在线使用**：直接打开上面的演示地址即可，无需安装。
+- **本地运行**（需 Node.js 22+）：
+  ```sh
+  pnpm install
+  pnpm dev        # 本地开发预览
+  pnpm build      # 类型检查 + 构建到 dist/
+  ```
+- **部署到自己的 GitHub Pages**：仓库已内置 GitHub Actions 工作流，把代码推送到 `main` 分支即可自动构建并发布，无需任何额外配置。
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+---
 
-## Project Setup
+## 📋 功能一览
 
-```sh
-pnpm install
-```
+### 滚动方式
+- **固定速度滚动**：自定义滚动速度（像素/秒），可随时暂停 / 继续。
+- **语音跟随滚动**：基于浏览器语音识别，你念到哪、稿子滚到哪；识别到的是「增量」还是「重说」，都会智能对齐，不会跳回开头。
+- **开始 / 停止**，运行中可**暂停 / 继续**。
 
-### Compile and Hot-Reload for Development
+### 阅读辅助
+- **朗读线**：当前阅读位置会对齐到一条高亮参考线，口播时也能直接拖动悬浮窗里的朗读线上下调整。
+- **滚轮缓动**：滚动带平滑缓动并限制单次幅度，手感顺、不晕；**未开始滚动时也能用鼠标/触摸上下浏览文稿**。
+- **触摸 / 鼠标拖拽浏览**：移动端和桌面端都能直接拖着看前后文。
 
-```sh
-pnpm dev
-```
+### 画面与排版
+- **字体**：内置 5 款常用字体（系统默认 / 黑体 / 宋体 / 楷体 / 等宽），一键切换。
+- **字号、文字颜色、背景颜色、行高**：随心调成你最舒服的对比度和大小。
+- **水平翻转 / 垂直翻转**。
+- **旋转**：0°/90°/180°/270° 快速切换，或任意角度（0–359°）微调，适配各种拍摄与摆放角度。
+- **英文单词是否断开**：默认整词换行；勾选后，行尾放不下的英文单词可拆开放两行，避免长单词溢出。
 
-### Type-Check, Compile and Minify for Production
+### 窗口与显示
+- **浮窗模式**：标题栏可拖拽移动，右下角可拖拽缩放，自由摆放在屏幕任意位置。
+- **窗口全屏**：填满主区域，不被设置面板挤占。
+- **屏幕全屏**：调用浏览器全屏，隐藏一切干扰，只留稿子。
+- **主题**：深色 / 浅色 / 跟随系统，自动适配系统配色。
+- **开始后自动隐藏设置面板**，进入纯净口播视图；桌面端设置面板可随时收起/展开。
 
-```sh
-pnpm build
-```
+### 文稿与配置
+- **直接输入文稿**：在设置面板文本框中编写。
+- **拖入 `.txt` 文档导入**：把文本文件拖进页面即可。
+- **配置本地自动保存**：所有设置写入浏览器本地，刷新或重开不丢失。
+- **导出 / 导入配置（JSON）**：备份设置，或在不同设备间迁移。
+- **一键恢复默认设置**。
+
+---
+
+## 🎯 适合谁用
+
+- 🎤 **主播 / 直播带货**：盯着镜头念，稿子自己跟。
+- 👩‍🏫 **老师 / 培训讲师**：录课、线上宣讲照稿不慌。
+- 🎬 **短视频 / 口播创作者**：横屏竖屏、镜像摆放都能转。
+- 🗣️ **演讲者 / 汇报人**：全屏纯净视图，台上更自信。
+- 📝 任何需要「照稿朗读」又不想一直手动滚屏的人。
+
+---
+
+## ❓ 注意事项
+
+- **语音跟随**依赖浏览器的语音识别能力，建议使用 **Chrome / Edge** 并授予**麦克风权限**；部分浏览器或隐私模式下可能不可用（此时会提示切换为固定速度模式）。
+- 设置保存在**当前浏览器**本地；换浏览器或清除站点数据会丢失，重要配置请用「导出配置」备份。
+- 在线演示地址需由仓库启用 GitHub Pages 后生效（默认推送到 `main` 即自动发布）。
