@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { state, rebuildNorm, exportConfig, importConfig } from '../store'
+import { state, rebuildNorm, exportConfig, importConfig, resetConfig } from '../store'
 
 const fonts = [
   { label: '系统默认', value: 'system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' },
@@ -163,6 +163,7 @@ function onImportFile(e: Event) {
         <button class="wide" @click="doExport">导出配置</button>
         <button class="wide" @click="triggerImport">导入配置</button>
       </div>
+      <button class="wide" style="margin-top: 8px" @click="resetConfig">恢复默认设置</button>
       <input
         ref="fileInput"
         type="file"

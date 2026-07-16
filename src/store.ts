@@ -158,6 +158,32 @@ export function importConfig(json: string): boolean {
   }
 }
 
+// ===== 本地持久化 =====
+const STORAGE_KEY = 'web-teleprompter-config'
+
+export function persist() {
+  try {
+    localStorage.setItem(STORAGE_KEY, exportConfig())
+  } catch {
+    /* 忽略写入失败（如隐私模式） */
+  }
+}
+
+export function loadPersisted() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) importConfig(raw)
+  } catch {
+    /* 忽略读取失败 */
+  }
+}
+
+export function initPersist() {
+  loadPersisted()
+  // 配置变化时自动写入本地，刷新不丢失
+  watch(() => exportConfig(), persist)
+}
+
 // 脚本变化时重建归一化信息并重置匹配进度
 export function rebuildNorm() {
   state.normInfo = buildNorm(state.script)

@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import ControlPanel from './components/ControlPanel.vue'
 import PrompterWindow from './components/PrompterWindow.vue'
-import { state, initTheme } from './store'
+import { state, initPersist, initTheme } from './store'
 import { useSpeechRecognition } from './composables/useSpeechRecognition'
 import { normalizeText, alignForward } from './utils/match'
 
@@ -10,6 +10,7 @@ const speech = useSpeechRecognition()
 const showPanel = ref(typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
 const toast = ref('')
 
+initPersist()
 initTheme()
 
 watch(speech.interimText, (v) => {
