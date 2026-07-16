@@ -5,7 +5,8 @@ import PrompterWindow from './components/PrompterWindow.vue'
 import { state, initPersist, initTheme, rebuildNorm } from './store'
 import { useSpeechRecognition } from './composables/useSpeechRecognition'
 import { normalizeText, alignForward } from './utils/match'
-import { i18nState, setLocale, t, locales, type Locale } from './i18n'
+import { t } from './i18n'
+import LocaleSwitcher from './components/LocaleSwitcher.vue'
 
 const speech = useSpeechRecognition()
 const showPanel = ref(typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
@@ -77,10 +78,6 @@ function stop() {
   }
 }
 
-function onLocaleChange(e: Event) {
-  setLocale((e.target as HTMLSelectElement).value as Locale)
-}
-
 // ===== 拖入 txt 文档导入文稿 =====
 const isDragging = ref(false)
 
@@ -135,9 +132,7 @@ function onDrop(e: DragEvent) {
       <div class="actions">
         <button class="primary" @click="start" :disabled="state.running">{{ t('action.start') }}</button>
         <button @click="stop" :disabled="!state.running">{{ t('action.stop') }}</button>
-        <select class="lang" :value="i18nState.locale" @change="onLocaleChange">
-          <option v-for="l in locales" :key="l.code" :value="l.code">{{ l.label }}</option>
-        </select>
+        <LocaleSwitcher />
         <button class="ghost" @click="showPanel = !showPanel">
           {{ showPanel ? t('action.hideSettings') : t('action.settings') }}
         </button>
@@ -215,15 +210,6 @@ function onDrop(e: DragEvent) {
 .actions button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-}
-.lang {
-  padding: 7px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border-soft);
-  background: var(--bg-card);
-  color: var(--text);
-  cursor: pointer;
-  font-size: 13px;
 }
 .body {
   position: relative;
