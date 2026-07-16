@@ -190,6 +190,7 @@ function onDrop(e: DragEvent) {
   cursor: not-allowed;
 }
 .body {
+  position: relative;
   flex: 1 1 auto;
   display: flex;
   min-height: 0;
