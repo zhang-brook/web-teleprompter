@@ -71,6 +71,9 @@ function onImportFile(e: Event) {
         @input="onScriptInput"
         placeholder="在此输入口播文稿……"
       ></textarea>
+      <p class="hint">
+        也可以直接把本地 .txt 文档拖拽到页面任意位置，自动导入为文稿。
+      </p>
     </section>
 
     <section class="sec">
