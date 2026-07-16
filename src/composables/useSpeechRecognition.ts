@@ -39,6 +39,14 @@ export function useSpeechRecognition() {
 
   let rec: SpeechRecognitionLike | null = null
   let onFinalCb: ((text: string) => void) | null = null
+  let restartTimer: number | null = null
+
+  function clearRestart() {
+    if (restartTimer !== null) {
+      window.clearTimeout(restartTimer)
+      restartTimer = null
+    }
+  }
 
   function start(cb: (text: string) => void) {
     if (!supported) {
@@ -46,6 +54,7 @@ export function useSpeechRecognition() {
       return
     }
     onFinalCb = cb
+    clearRestart()
     const Ctor = (window.SpeechRecognition || window.webkitSpeechRecognition)!
     rec = new Ctor()
     rec.continuous = true
@@ -70,13 +79,19 @@ export function useSpeechRecognition() {
     }
 
     rec.onend = () => {
-      // 气口/静音导致识别结束时，若仍在口播中则自动重启，保持匹配位置不丢失
+      // 仍在口播中：浏览器在静音/气口后会结束识别，需要重新启动才能继续跟随。
+      // 关键：在 onend 内【同步】调用 start 在 Chrome 中会抛 InvalidStateError，
+      // 被 catch 吞掉后识别会彻底终止、之后不再跟随。故延迟到下一轮事件循环再启动。
       if (listening.value && rec) {
-        try {
-          rec.start()
-        } catch {
-          /* 忽略重复 start 异常 */
-        }
+        restartTimer = window.setTimeout(() => {
+          restartTimer = null
+          if (!listening.value || !rec) return
+          try {
+            rec.start()
+          } catch {
+            /* 忽略重复启动异常 */
+          }
+        }, 80)
       } else {
         listening.value = false
       }
@@ -93,6 +108,7 @@ export function useSpeechRecognition() {
 
   function stop() {
     listening.value = false
+    clearRestart()
     interimText.value = ''
     if (rec) {
       try {
