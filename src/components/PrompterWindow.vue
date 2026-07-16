@@ -46,6 +46,15 @@ function scrollBounds() {
   return { min, max }
 }
 
+// 内容边界外再允许额外滚动一点，避免“滚到开始/结束位置后无法继续反向滚动”的死区
+// （lo/hi 是用户可滚动的总位置范围，autoScroll 仍被限制在 [min, max] 内，不会自动滚进空白区）
+function relaxedBounds() {
+  const { min, max } = scrollBounds()
+  const vh = viewportRef.value?.clientHeight ?? 0
+  const overscroll = Math.max(80, vh * 0.5)
+  return { min, max, lo: min - overscroll, hi: max + overscroll }
+}
+
 // 监听脚本变化，重建字符与 span 缓存
 watch(
   () => state.script,
@@ -164,12 +173,17 @@ function tick(now: number) {
   // 鼠标/触摸偏移缓动逼近目标值（不直接跳变）
   const ke = 1 - Math.exp(-dt / 140)
   userOffset.value += (userOffsetTarget.value - userOffset.value) * ke
-  if (userOffset.value > max) userOffset.value = max
-  if (userOffset.value < min) userOffset.value = min
+  // 相对自动滚动位置限制偏移，使总位置落在 [lo, hi]：
+  // 避免把相对偏移错当成绝对位置来裁剪而产生“滚轮有增益但画面不动”的死区
+  const { lo, hi } = relaxedBounds()
+  const loU = lo - autoScroll.value
+  const hiU = hi - autoScroll.value
+  if (userOffset.value > hiU) userOffset.value = hiU
+  if (userOffset.value < loU) userOffset.value = loU
 
   let total = autoScroll.value + userOffset.value
-  if (total > max) total = max
-  if (total < min) total = min
+  if (total > hi) total = hi
+  if (total < lo) total = lo
 
   if (contentRef.value) {
     contentRef.value.style.transform = `translateY(${-total}px)`
@@ -191,15 +205,25 @@ function tick(now: number) {
 
 // ===== 鼠标滚轮 / 触摸额外滚动（偏移保持，未开始时也可滚动浏览）=====
 function clampOffsetTarget() {
-  const { min, max } = scrollBounds()
-  if (userOffsetTarget.value > max) userOffsetTarget.value = max
-  if (userOffsetTarget.value < min) userOffsetTarget.value = min
+  const { lo, hi } = relaxedBounds()
+  const loU = lo - autoScroll.value
+  const hiU = hi - autoScroll.value
+  if (userOffsetTarget.value > hiU) userOffsetTarget.value = hiU
+  if (userOffsetTarget.value < loU) userOffsetTarget.value = loU
 }
 
 function onWheel(e: WheelEvent) {
   e.preventDefault()
+  // 归一化不同 deltaMode 的滚动量（像素/行/页），否则 Firefox 等按“行”返回的滚轮
+  // deltaY 只有个位数，乘以 WHEEL_MAX_STEP 截断后几乎不动，表现为“增益没反应”
+  let d = e.deltaY
+  if (e.deltaMode === 1) {
+    d *= Math.max(16, state.fontSize * state.lineHeight)
+  } else if (e.deltaMode === 2) {
+    d *= viewportRef.value?.clientHeight ?? 800
+  }
   // 限制单次位移，并累加到目标值由动画循环缓动逼近
-  const d = Math.max(-WHEEL_MAX_STEP, Math.min(WHEEL_MAX_STEP, e.deltaY))
+  d = Math.max(-WHEEL_MAX_STEP, Math.min(WHEEL_MAX_STEP, d))
   userOffsetTarget.value += d
   clampOffsetTarget()
 }
