@@ -18,6 +18,7 @@ interface SpeechRecognitionLike {
   stop(): void
   onresult: ((e: SpeechRecognitionEventLike) => void) | null
   onerror: ((e: { error?: string }) => void) | null
+  onstart: (() => void) | null
   onend: (() => void) | null
 }
 
@@ -34,6 +35,7 @@ export function useSpeechRecognition() {
       window.SpeechRecognition || window.webkitSpeechRecognition)
 
   const listening = ref(false)
+  const loading = ref(false)
   const error = ref('')
   const interimText = ref('')
   const available = ref(supported)
@@ -41,12 +43,32 @@ export function useSpeechRecognition() {
   let rec: SpeechRecognitionLike | null = null
   let onFinalCb: ((text: string) => void) | null = null
   let restartTimer: number | null = null
+  let loadStart = 0 // 开始加载的时间戳（用于保证最短展示时长）
+  let minLoadTimer: number | null = null // 保证最短展示时长的定时器
 
   function clearRestart() {
     if (restartTimer !== null) {
       window.clearTimeout(restartTimer)
       restartTimer = null
     }
+  }
+
+  // 真正关闭加载态，并清理相关定时器
+  function hideLoading() {
+    loading.value = false
+    if (minLoadTimer !== null) {
+      window.clearTimeout(minLoadTimer)
+      minLoadTimer = null
+    }
+  }
+
+  // 结束加载态：若距开始不足最短时长，则延迟到最短时长后再隐藏，确保用户能看到反馈
+  function endLoading() {
+    if (!loading.value) return
+    const MIN = 600
+    const elapsed = performance.now() - loadStart
+    if (elapsed >= MIN) hideLoading()
+    else minLoadTimer = window.setTimeout(() => { minLoadTimer = null; hideLoading() }, MIN - elapsed)
   }
 
   function start(cb: (text: string) => void) {
@@ -62,7 +84,14 @@ export function useSpeechRecognition() {
     rec.interimResults = true
     rec.lang = 'zh-CN'
 
+    rec.onstart = () => {
+      console.log('onstart')
+      // 识别引擎真正就绪，结束加载态
+      endLoading()
+    }
+
     rec.onresult = (e: SpeechRecognitionEventLike) => {
+      console.log('onresult', e)
       let finalChunk = ''
       let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -76,10 +105,13 @@ export function useSpeechRecognition() {
     }
 
     rec.onerror = (e: { error?: string }) => {
+      console.log('onerror', e)
       error.value = e.error || 'speech-error'
+      hideLoading()
     }
 
     rec.onend = () => {
+      console.log('onend')
       // 仍在口播中：浏览器在静音/气口后会结束识别，需要重新启动才能继续跟随。
       // 关键：在 onend 内【同步】调用 start 在 Chrome 中会抛 InvalidStateError，
       // 被 catch 吞掉后识别会彻底终止、之后不再跟随。故延迟到下一轮事件循环再启动。
@@ -99,16 +131,20 @@ export function useSpeechRecognition() {
     }
 
     listening.value = true
+    loading.value = true
+    loadStart = performance.now()
     error.value = ''
     try {
       rec.start()
-    } catch {
-      /* 已在运行等情况忽略 */
-    }
+      } catch {
+        /* 已在运行等情况忽略 */
+      }
   }
 
   function stop() {
+    console.log('stop')
     listening.value = false
+    hideLoading()
     clearRestart()
     interimText.value = ''
     if (rec) {
@@ -123,5 +159,5 @@ export function useSpeechRecognition() {
 
   onUnmounted(stop)
 
-  return { available, listening, error, interimText, start, stop }
+  return { available, listening, loading, error, interimText, start, stop }
 }

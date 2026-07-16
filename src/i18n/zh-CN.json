@@ -15,6 +15,7 @@
   "toast.readFailed": "导入失败：无法读取文件",
   "speech.errorPrefix": "语音识别：",
   "speech.unsupported": "当前浏览器不支持语音识别（建议使用 Chrome / Edge）",
+  "speech.loading": "语音识别加载中……",
   "panel.script": "文稿",
   "panel.scriptPlaceholder": "在此输入口播文稿……",
   "panel.scriptHint": "也可以直接把本地 .txt 文档拖拽到页面任意位置，自动导入为文稿。",

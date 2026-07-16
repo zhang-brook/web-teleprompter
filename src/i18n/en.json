@@ -15,6 +15,7 @@
   "toast.readFailed": "Import failed: could not read the file",
   "speech.errorPrefix": "Speech recognition: ",
   "speech.unsupported": "Speech recognition is not supported in this browser (use Chrome / Edge)",
+  "speech.loading": "Loading speech recognition…",
   "panel.script": "Script",
   "panel.scriptPlaceholder": "Type your teleprompter script here…",
   "panel.scriptHint": "You can also drag a local .txt file anywhere on the page to import it as the script.",

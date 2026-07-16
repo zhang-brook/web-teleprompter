@@ -15,6 +15,7 @@
   "toast.readFailed": "匯入失敗：無法讀取檔案",
   "speech.errorPrefix": "語音辨識：",
   "speech.unsupported": "目前瀏覽器不支援語音辨識（建議使用 Chrome / Edge）",
+  "speech.loading": "語音辨識載入中……",
   "panel.script": "文稿",
   "panel.scriptPlaceholder": "在此輸入口播文稿……",
   "panel.scriptHint": "也可以直接把本地 .txt 文件拖曳到頁面任意位置，自動匯入為文稿。",

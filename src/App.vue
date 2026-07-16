@@ -149,6 +149,11 @@ function onDrop(e: DragEvent) {
       </main>
     </div>
 
+    <div v-if="speech.loading.value" class="speech-loading">
+      <div class="spinner"></div>
+      <span class="speech-loading-text">{{ t('speech.loading') }}</span>
+    </div>
+
     <div v-if="isDragging" class="drop-overlay">
       <div class="drop-hint">{{ t('drop.hint') }}</div>
     </div>
@@ -273,6 +278,35 @@ function onDrop(e: DragEvent) {
   color: var(--text);
   background: var(--bg-card);
   font-size: 15px;
+}
+.speech-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+}
+.spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.25);
+  border-top-color: var(--accent);
+  animation: speech-spin 0.8s linear infinite;
+}
+.speech-loading-text {
+  font-size: 14px;
+  color: var(--text);
+}
+@keyframes speech-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 767px) {
