@@ -58,13 +58,27 @@ export function analyzeScript(text: string): ScriptAnalysis {
     latin: 0,
   }
   let kana = 0
-  let total = 0
+  // 拉丁文字按“单词”计（连续字母视为一个词），其余文字家族按字符计，
+  // 这样占比才接近真实的朗读/阅读量，避免英文逐字母累加导致占比被夸大。
+  let latinWords = 0
+  let inLatin = false
 
   for (const ch of text) {
     const cp = ch.codePointAt(0)!
     const f = rawFamily(cp)
-    if (!f) continue
-    total++
+    // 标点/数字/空白/符号不计入，并断开拉丁词边界
+    if (!f) {
+      inLatin = false
+      continue
+    }
+    if (f === 'latin') {
+      if (!inLatin) {
+        latinWords++
+        inLatin = true
+      }
+      continue
+    }
+    inLatin = false
     if (f === 'japanese') {
       kana++
       counts.japanese++
@@ -72,6 +86,7 @@ export function analyzeScript(text: string): ScriptAnalysis {
       counts[f]++
     }
   }
+  counts.latin = latinWords
 
   // 日语：假名只要达到一定数量即判定为日语，并将其汉字并入日语家族，
   // 避免“日语（汉字+假名）”被误判为“中文+日语混合”。
@@ -80,6 +95,9 @@ export function analyzeScript(text: string): ScriptAnalysis {
     counts.japanese += counts.han
     counts.han = 0
   }
+
+  // total 为各家族“单位数”之和：拉丁=单词数，其余=字符数
+  const total = counts.han + counts.japanese + counts.korean + counts.cyrillic + counts.latin
 
   const substantial = (f: Exclude<ScriptFamily, 'unknown'>): boolean => {
     if (total === 0) return false
