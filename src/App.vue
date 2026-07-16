@@ -23,9 +23,20 @@ watch(speech.error, (v) => {
   }
 })
 
+// 已用于对齐的识别文本累计量，保证只对新内容做增量对齐
+let recNormAcc = ''
+
 function handleFinal(text: string) {
   const recNorm = normalizeText(text)
-  state.matchedNorm = alignForward(state.normInfo.norm, state.matchedNorm, recNorm)
+  if (recNorm.length > recNormAcc.length && recNorm.startsWith(recNormAcc)) {
+    // 仅对齐新增部分（识别引擎返回增量文本时）
+    const delta = recNorm.slice(recNormAcc.length)
+    state.matchedNorm = alignForward(state.normInfo.norm, state.matchedNorm, delta)
+  } else {
+    // 无法增量（识别引擎重置/回传累计文本）时，从当前位置稍前处整体重对齐
+    state.matchedNorm = alignForward(state.normInfo.norm, Math.max(0, state.matchedNorm - 24), recNorm)
+  }
+  recNormAcc = recNorm
 }
 
 function start() {
@@ -41,8 +52,10 @@ function start() {
   }
   state.matchedNorm = 0
   state.interimText = ''
+  recNormAcc = ''
   state.running = true
   state.paused = false
+  showPanel.value = false // 开始后自动隐藏设置面板，进入纯净口播视图
   if (state.mode === 'speech') speech.start(handleFinal)
 }
 
@@ -50,6 +63,7 @@ function stop() {
   state.running = false
   state.paused = false
   speech.stop()
+  recNormAcc = ''
   state.matchedNorm = 0
   state.interimText = ''
 }

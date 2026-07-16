@@ -34,6 +34,7 @@ export function useSpeechRecognition() {
 
   const listening = ref(false)
   const error = ref('')
+  const interimText = ref('')
   const available = ref(supported)
 
   let rec: SpeechRecognitionLike | null = null
@@ -53,10 +54,14 @@ export function useSpeechRecognition() {
 
     rec.onresult = (e: SpeechRecognitionEventLike) => {
       let finalChunk = ''
+      let interim = ''
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        const res = e.results[i]
-        if (res.isFinal) finalChunk += res[0].transcript
+        const res = e.results[i]!
+        const txt = res[0]!.transcript
+        if (res.isFinal) finalChunk += txt
+        else interim += txt
       }
+      interimText.value = interim
       if (finalChunk) onFinalCb?.(finalChunk)
     }
 
@@ -88,6 +93,7 @@ export function useSpeechRecognition() {
 
   function stop() {
     listening.value = false
+    interimText.value = ''
     if (rec) {
       try {
         rec.stop()
@@ -100,5 +106,5 @@ export function useSpeechRecognition() {
 
   onUnmounted(stop)
 
-  return { available, listening, error, start, stop }
+  return { available, listening, error, interimText, start, stop }
 }

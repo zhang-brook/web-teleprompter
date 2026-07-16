@@ -23,7 +23,7 @@ export function buildNorm(text: string): NormInfo {
   const origToNorm: number[] = new Array(text.length).fill(-1)
   let norm = ''
   for (let i = 0; i < text.length; i++) {
-    const ch = text[i]
+    const ch = text[i]!
     if (isSkippable(ch)) continue
     origToNorm[i] = norm.length
     normToOrig.push(i)
@@ -36,7 +36,7 @@ export function buildNorm(text: string): NormInfo {
 export function normalizeText(text: string): string {
   let norm = ''
   for (let i = 0; i < text.length; i++) {
-    const ch = text[i]
+    const ch = text[i]!
     if (isSkippable(ch)) continue
     norm += ch.toLowerCase()
   }
