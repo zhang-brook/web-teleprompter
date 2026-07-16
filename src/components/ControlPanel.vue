@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { state, rebuildNorm } from '../store'
+import { ref } from 'vue'
+import { state, rebuildNorm, exportConfig, importConfig } from '../store'
 
 const fonts = [
   { label: '系统默认', value: 'system-ui, "PingFang SC", "Microsoft YaHei", sans-serif' },
@@ -23,6 +24,40 @@ function resetWin() {
   } else {
     state.win = { x: Math.round(vw / 2 - 300), y: 90, w: 600, h: Math.min(420, vh - 180) }
   }
+}
+
+const msg = ref('')
+const fileInput = ref<HTMLInputElement | null>(null)
+
+function doExport() {
+  const data = exportConfig()
+  const blob = new Blob([data], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'teleprompter-config.json'
+  a.click()
+  URL.revokeObjectURL(url)
+  msg.value = '配置已导出'
+  setTimeout(() => (msg.value = ''), 2500)
+}
+
+function triggerImport() {
+  fileInput.value?.click()
+}
+
+function onImportFile(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    const ok = importConfig(String(reader.result))
+    msg.value = ok ? '配置已导入' : '导入失败：文件格式不正确'
+    setTimeout(() => (msg.value = ''), 3000)
+  }
+  reader.readAsText(file)
+  input.value = ''
 }
 </script>
 
@@ -120,6 +155,22 @@ function resetWin() {
       <h3>漂浮窗</h3>
       <button class="wide" @click="resetWin">重置窗口位置/大小</button>
       <p class="hint">口播时可直接拖拽标题栏移动，拖右下角缩放。</p>
+    </section>
+
+    <section class="sec">
+      <h3>配置</h3>
+      <div class="row2">
+        <button class="wide" @click="doExport">导出配置</button>
+        <button class="wide" @click="triggerImport">导入配置</button>
+      </div>
+      <input
+        ref="fileInput"
+        type="file"
+        accept="application/json,.json"
+        style="display: none"
+        @change="onImportFile"
+      />
+      <p v-if="msg" class="hint">{{ msg }}</p>
     </section>
   </div>
 </template>
@@ -219,6 +270,13 @@ button.active {
   border: 1px solid var(--border-soft);
   border-radius: 8px;
   cursor: pointer;
+}
+.row2 {
+  display: flex;
+  gap: 8px;
+}
+.row2 .wide {
+  flex: 1;
 }
 .hint {
   font-size: 12px;

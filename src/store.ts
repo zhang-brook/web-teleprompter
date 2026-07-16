@@ -141,6 +141,23 @@ export function resetConfig() {
   applyConfig(defaultConfig())
 }
 
+// 导出当前配置为 JSON 字符串
+export function exportConfig(): string {
+  return JSON.stringify(toConfig(), null, 2)
+}
+
+// 从 JSON 字符串导入配置；解析失败返回 false
+export function importConfig(json: string): boolean {
+  try {
+    const cfg = JSON.parse(json) as Partial<AppConfig>
+    if (typeof cfg !== 'object' || cfg === null) return false
+    applyConfig(cfg)
+    return true
+  } catch {
+    return false
+  }
+}
+
 // 脚本变化时重建归一化信息并重置匹配进度
 export function rebuildNorm() {
   state.normInfo = buildNorm(state.script)
