@@ -113,6 +113,11 @@ function onImportFile(e: Event) {
         语音跟随：说出文稿内容，文字会自动滚到当前读到/说到的位置并居中。<br />
         已自动处理停顿气口与换种表述；可用鼠标滚轮在滚动时上下微调（偏移保持）。
       </p>
+
+      <div class="field">
+        <label>鼠标滚轮每格移动：{{ state.wheelStep }}px</label>
+        <input type="range" min="10" max="300" step="5" v-model.number="state.wheelStep" />
+      </div>
     </section>
 
     <section class="sec">

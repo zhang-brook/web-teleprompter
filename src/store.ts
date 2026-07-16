@@ -43,6 +43,9 @@ function makeDefaults() {
     // 固定速度（像素/秒）
     speed: 60,
 
+    // 鼠标滚轮每格文字上/下移动的距离（像素），避免一滚就飞很远找不到位置
+    wheelStep: 80,
+
     // 外观
     fontSize: 40,
     fontFamily: 'system-ui, "PingFang SC", "Microsoft YaHei", sans-serif',
@@ -92,6 +95,7 @@ export const usable: (keyof typeof state)[] = [
   'script',
   'mode',
   'speed',
+  'wheelStep',
   'fontSize',
   'fontFamily',
   'color',
