@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { state, rebuildNorm, exportConfig, importConfig, resetConfig } from '../store'
 
 const fonts = [
@@ -25,6 +25,14 @@ function resetWin() {
     state.win = { x: Math.round(vw / 2 - 300), y: 90, w: 600, h: Math.min(420, vh - 180) }
   }
 }
+
+// 朗读线位置以比例(0~1)存储，滑块用百分比(5~95)展示，二者互转避免显示 500%~9500%
+const readLinePct = computed({
+  get: () => Math.round(state.readLine * 100),
+  set: (v: number) => {
+    state.readLine = Math.max(0.05, Math.min(0.95, v / 100))
+  },
+})
 
 const msg = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -134,8 +142,8 @@ function onImportFile(e: Event) {
     <section class="sec">
       <h3>朗读线</h3>
       <div class="field">
-        <label>位置（距顶部）：{{ Math.round(state.readLine * 100) }}%</label>
-        <input type="range" min="5" max="95" step="1" v-model.number="state.readLine" />
+        <label>位置（距顶部）：{{ readLinePct }}%</label>
+        <input type="range" min="5" max="95" step="1" v-model.number="readLinePct" />
       </div>
       <p class="hint">当前阅读位置会对齐到该线；口播时也可直接拖动悬浮窗中的朗读线上下调整。</p>
     </section>
