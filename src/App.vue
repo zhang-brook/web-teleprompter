@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import ControlPanel from './components/ControlPanel.vue'
 import PrompterWindow from './components/PrompterWindow.vue'
-import { state, initPersist, initTheme } from './store'
+import { state, initPersist, initTheme, rebuildNorm } from './store'
 import { useSpeechRecognition } from './composables/useSpeechRecognition'
 import { normalizeText, alignForward } from './utils/match'
 
@@ -67,10 +67,53 @@ function stop() {
   state.matchedNorm = 0
   state.interimText = ''
 }
+
+// ===== 拖入 txt 文档导入文稿 =====
+const isDragging = ref(false)
+
+function isTextFile(f: File): boolean {
+  return f.type.startsWith('text/') || /\.txt$/i.test(f.name)
+}
+
+function onDragOver(e: DragEvent) {
+  const dt = e.dataTransfer
+  if (dt && Array.from(dt.items).some((it) => it.kind === 'file')) {
+    e.preventDefault()
+    isDragging.value = true
+  }
+}
+
+function onDragLeave(e: DragEvent) {
+  if (e.relatedTarget === null) isDragging.value = false
+}
+
+function onDrop(e: DragEvent) {
+  e.preventDefault()
+  isDragging.value = false
+  const file = e.dataTransfer?.files?.[0]
+  if (!file) return
+  if (!isTextFile(file)) {
+    toast.value = '仅支持导入 .txt 文本文档'
+    setTimeout(() => (toast.value = ''), 3000)
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = () => {
+    state.script = String(reader.result ?? '')
+    rebuildNorm()
+    toast.value = '已从 ' + file.name + ' 导入文稿'
+    setTimeout(() => (toast.value = ''), 3000)
+  }
+  reader.onerror = () => {
+    toast.value = '导入失败：无法读取文件'
+    setTimeout(() => (toast.value = ''), 3000)
+  }
+  reader.readAsText(file)
+}
 </script>
 
 <template>
-  <div class="app">
+  <div class="app" @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop">
     <header class="topbar">
       <div class="brand">网页提词器</div>
       <div class="actions">
@@ -90,6 +133,10 @@ function stop() {
         <PrompterWindow @stop="stop" />
         <div v-if="toast" class="toast">{{ toast }}</div>
       </main>
+    </div>
+
+    <div v-if="isDragging" class="drop-overlay">
+      <div class="drop-hint">拖入 .txt 文档以导入文稿</div>
     </div>
   </div>
 </template>
@@ -185,6 +232,24 @@ function stop() {
   font-size: 13px;
   z-index: 50;
   max-width: 90%;
+}
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+.drop-hint {
+  padding: 18px 26px;
+  border: 2px dashed var(--accent);
+  border-radius: 12px;
+  color: var(--text);
+  background: var(--bg-card);
+  font-size: 15px;
 }
 
 @media (max-width: 767px) {
