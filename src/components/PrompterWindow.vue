@@ -557,11 +557,11 @@ function stop() {
 }
 .pw-drag-handle {
   position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 6px;
-  height: 56px;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 6px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.22);
   cursor: move;
