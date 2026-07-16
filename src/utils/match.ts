@@ -82,7 +82,11 @@ function tolerantAlign(
   let bestEnd = -1
   for (let p = 1; p <= rowEnd; p++) {
     const cur = new Array(M + 1).fill(INF)
-    cur[0] = p // 允许从任意位置开始（头部删除若干 script 字符，对应整段 utterance 的头部在脚本开头）
+    // 头部可低价锚定在【脚本开头(0)】或【当前朗读位置(fromNorm)】：
+    //  - 正常单次会话：识别文本是从会话开头累计的完整文本，头部在 0，代价 0；
+    //  - 会话因网络错误/静音重启后 results 重新累计，新文本只含重启后说的话，
+    //    头部对应 fromNorm，若不放宽代价则 p≈fromNorm 远超 maxCost 而永远对不上（光标卡死）。
+    cur[0] = Math.min(p, Math.abs(p - fromNorm))
     const sc = script[p - 1]!
     for (let j = 1; j <= M; j++) {
       const cost = sc === r[j - 1]! ? 0 : 1
