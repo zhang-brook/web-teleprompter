@@ -34,6 +34,10 @@ const langCheckInfo = computed(() => {
     kind: 'mismatch' as const,
     detected: t('speech.family.' + c.detected),
     selected: recLangLabel(state.recLang),
+    breakdown: c.breakdown.map((b) => ({
+      label: t('speech.family.' + b.family),
+      percent: b.percent,
+    })),
   }
 })
 
@@ -214,9 +218,20 @@ function onDrop(e: DragEvent) {
             </li>
           </ul>
         </template>
-        <p v-else>
-          {{ t('speech.langCheckMismatch', { detected: langCheckInfo.detected, selected: langCheckInfo.selected }) }}
-        </p>
+        <template v-else>
+          <p>
+            {{ t('speech.langCheckMismatch', { detected: langCheckInfo.detected, selected: langCheckInfo.selected }) }}
+          </p>
+          <ul class="lang-breakdown">
+            <li v-for="b in langCheckInfo.breakdown" :key="b.label">
+              <span class="lang-breakdown-name">{{ b.label }}</span>
+              <span class="lang-breakdown-bar">
+                <span class="lang-breakdown-fill" :style="{ width: b.percent + '%' }"></span>
+              </span>
+              <span class="lang-breakdown-pct">{{ b.percent }}%</span>
+            </li>
+          </ul>
+        </template>
         <div class="lang-check-actions">
           <button class="primary" @click="backToSelect">{{ t('action.backToSelect') }}</button>
           <button class="weak" @click="continueStart">{{ t('action.continueStart') }}</button>

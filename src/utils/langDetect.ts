@@ -128,7 +128,7 @@ export interface LangPercent {
 export type SpeechLangCheck =
   | { type: 'ok' }
   | { type: 'mixed'; families: ScriptFamily[]; breakdown: LangPercent[] }
-  | { type: 'mismatch'; detected: ScriptFamily; selected: ScriptFamily }
+  | { type: 'mismatch'; detected: ScriptFamily; selected: ScriptFamily; breakdown: LangPercent[] }
 
 // 依据字符统计计算各文字家族占比（仅统计有效字符：字母/汉字/假名等，忽略标点数字空白）。
 // 传入 only 时仅返回该集合内的家族，否则返回所有出现过的家族；结果按占比降序。
@@ -159,7 +159,7 @@ export function checkSpeechLanguage(text: string, recLang: string): SpeechLangCh
   if (a.detected === 'unknown') return { type: 'ok' }
   const selected = recLangFamilyOf(recLang)
   if (selected !== 'unknown' && a.detected !== selected) {
-    return { type: 'mismatch', detected: a.detected, selected }
+    return { type: 'mismatch', detected: a.detected, selected, breakdown: computeLangPercents(a) }
   }
   return { type: 'ok' }
 }

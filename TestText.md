@@ -36,3 +36,15 @@ There aren't many students at this school — only fifty in total, divided into 
 The school's facilities are very basic — no **computer**, no **Internet**. But I actually prefer working here. I feel the children here are very different from students in the city. City kids spend too much time on their **smartphones**, which directly affects their learning. City children don't seem to have much interest in studying either — their **xuéxí tàidù** (学习态度) is not great. So I prefer working in this mountain school.
 
 The children here are full of **energy** every day, and their **curiosity** about knowledge truly moves me. **C'est la vie** — despite the difficult conditions, their smiles are the best reward.
+
+---
+
+### 边界情况测试
+
+我从小就想当一名小学老师。上个月我去了中国的一个偏远山区，在那里的一所小学教书。虽然学校里的学生们每天要走很长的路来上学，但是他们每天还是开开心心地来上学。
+
+这所学校学生不多，全校一共只有五十个学生，被分成了两个班。这里有两名老师，一个负责教**Chinese**和**English**，另一个教**Math**和**Science**。我们每天八点半开始上课，两点半就要下课了——因为一些学生需要回家帮家人做家务，有的要到田里种菜，有的要照顾弟弟妹妹。
+
+The school's facilities are very basic — no **computer**, no **Internet**. But I actually prefer working here. I feel the children here are very different from students in the city. City kids spend too much time on their **smartphones**, which directly affects their learning. City children don't seem to have much interest in studying either — their **xuéxí tàidù** (学习态度) is not great. So I prefer working in this mountain school.
+
+这里的孩子们每天都充满**energy**，他们对知识的**curiosity**让我感动。虽然条件艰苦，但他们的**smile**是最好的回报。
