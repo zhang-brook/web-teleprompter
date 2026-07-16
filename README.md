@@ -14,13 +14,15 @@
 
 ## ✨ Why you'll love it (Highlights)
 
-- **🎙️ Voice-following scroll** — Start talking and the script scrolls to the exact line you're reading and keeps it centered. It tolerates pauses, breaths, and even rephrasing, so you never touch the mouse or keyboard.
+- **🎙️ Voice-following scroll** — Start talking and the script scrolls to the exact line you're reading and keeps it centered. It tolerates pauses, breaths, and even rephrasing, and *auto-resumes* after a silence, so you never touch the mouse or keyboard.
+- **🛡️ Smart language check before you start** — Before voice mode begins, it scans your script and warns you if it's a mix of languages or doesn't match the selected recognition language. A dialog shows the detected language breakdown (with percentages) so you can pick the right one — no embarrassing misreads mid-take.
 - **🔄 Turns to face you — flip & rotate any way** — Horizontal / vertical flip, plus one-tap 0° / 90° / 180° / 270° or any fine angle (0–359°). Whether your phone lies sideways, your prompter mirrors the text, or you read at an angle, the view rotates to face you.
-- **📍 Reading line + you always know where you are** — A reference line marks exactly where you are; drag it to any comfortable height. As you read, the current word is highlighted and text you've already passed gently fades, so you never lose your place.
+- **📍 Reading line + you always know where you are** — A reference line marks exactly where you are; drag it to any comfortable height (even mid-presentation). As you read, the current word is highlighted and text you've already passed gently fades, so you never lose your place.
 - **🖱️ Calm scrolling that never loses you** — Mouse-wheel scrolling is eased and capped per move, so it never jumps far away. You can also browse the script up/down before you even start.
 - **🪟 Use it your way — flexible window modes** — Floating window (drag anywhere, resize from the corner), window-fullscreen (fills the screen), or browser-fullscreen (nothing but the script).
 - **💾 Your setup is remembered** — Every setting auto-saves locally and survives refreshes; one-click JSON export/import keeps you seamless across devices and browsers.
 - **📄 Drop a `.txt` to import** — Drag a `.txt` script file straight onto the page and it becomes your teleprompter content instantly — no copy-paste needed.
+- **🌐 Built for the world** — Interface in 简体中文 / 繁體中文 / English; speech recognition in 10 languages (see below).
 
 ---
 
@@ -46,30 +48,37 @@ That's it. Everything else is optional tuning.
 ## 📋 Full feature list
 
 ### Scrolling
-- **Fixed-speed scroll** — Set your own speed (pixels/second) and pause / resume anytime.
-- **Voice-following scroll** — Powered by the browser's built-in speech recognition: the script tracks where you are reading. It smartly re-aligns whether the engine returns an increment or a re-spoken phrase, so it never jumps back to the start.
+- **Fixed-speed scroll** — Set your own speed (10–400 px/s) and pause / resume anytime.
+- **Voice-following scroll** — Powered by the browser's built-in speech recognition: the script tracks where you are reading. It smartly re-aligns whether the engine returns an increment or a re-spoken phrase, so it never jumps back to the start, and it silently restarts after a breath or silence to keep following.
 - **Start / Stop**, with **Pause / Resume** while running.
+- **Live recognition read-back** — While voice-following, the words currently being heard are echoed at the bottom of the prompter, so you get instant visual confirmation the mic is working.
+
+### Voice recognition
+- **Pick your recognition language** — 10 built-in options: 简体中文（普通话）、繁體中文（國語）、English (US)、English (UK)、日本語、한국어、Français、Deutsch、Español、Русский.
+- **Smart start check** — If the script is a mix of languages, or its language doesn't match the selected one, a dialog appears with a per-language percentage breakdown. Choose **Go back & pick language** to fix it, or **Continue anyway** if you know better.
+- **Loading indicator** — A spinner shows while the speech engine is warming up, so you always know it's preparing.
 
 ### Reading aids
 - **Reading line** — Your current position snaps to a highlighted reference line; drag it up/down right inside the floating window while presenting.
 - **Read-position highlighting** — In both modes the word you're reading is highlighted and text you've already passed fades out, so your eyes always lock onto the right spot.
 - **Eased wheel scroll** — Smooth, capped scrolling that feels calm and never disorients; works **even before you start**, so you can review the script by mouse or touch.
 - **Touch / mouse drag to browse** — On mobile and desktop alike, just drag to look at context before or after.
-- **Tune mouse-wheel sensitivity** — Adjust how far one wheel notch moves the text, so scrolling fits your habit instead of flying off.
+- **Tune mouse-wheel sensitivity** — Adjust how far one wheel notch moves the text (10–300 px), so scrolling fits your habit instead of flying off.
 
 ### Layout & typography
 - **Fonts** — 5 built-in fonts (system default / sans / serif / kai / monospace), one tap to switch.
-- **Font size, text color, background color, line height** — Tune contrast and size to whatever is most comfortable.
+- **Font size, text color, background color** — Tune size and contrast to whatever is most comfortable for your shoot.
 - **Horizontal / vertical flip**.
 - **Rotation** — Quick 0° / 90° / 180° / 270°, or any fine angle (0–359°) to fit any shooting or placement.
 - **Break English words** — By default words wrap whole; enable it and a long word that doesn't fit at a line end can split across two lines instead of overflowing.
 
 ### Window & display
-- **Floating window** — Drag the title bar (or the visible handle) to move, drag the bottom-right corner to resize, place it anywhere on screen.
+- **Floating window** — Grab the title bar or the visible semi-transparent handle to move, drag the bottom-right corner to resize, place it anywhere on screen.
 - **Window-fullscreen** — Fills the main area without being squeezed by the settings panel.
 - **Browser-fullscreen** — Uses the real fullscreen API; hide every distraction, only the script remains.
 - **Theme** — Dark / Light / Follow system, auto-matching your OS.
 - **Auto-hide settings after start** — Enters a clean reading view; on desktop the panel can be collapsed/expanded anytime.
+- **Responsive by design** — Adapts to phone, tablet, and desktop; on narrow screens the settings panel becomes a slide-in drawer so the teleprompter never gets pushed off-screen.
 
 ### Script & settings
 - **Type your script** — Right in the settings panel text box.
@@ -77,6 +86,10 @@ That's it. Everything else is optional tuning.
 - **Local auto-save** — All settings persist in the browser; refresh or reopen without losing them.
 - **Export / import config (JSON)** — Back up settings or migrate between devices.
 - **One-click reset to defaults**.
+
+### Languages & interface
+- **Interface** in 简体中文 / 繁體中文 / English, switchable from the top bar.
+- **Speech recognition** in 10 languages (listed above). Note: the browser can only recognize one language at a time, so keep your script in a single language per take.
 
 ---
 
@@ -92,7 +105,7 @@ That's it. Everything else is optional tuning.
 
 ## ❓ Good to know
 
-- **Voice following** relies on the browser's speech recognition. We recommend **Chrome / Edge** with **microphone permission** granted; some browsers or private modes may not support it (you'll be prompted to switch to fixed-speed mode).
+- **Voice following** relies on the browser's speech recognition. We recommend **Chrome / Edge** with **microphone permission** granted; some browsers or private modes may not support it (you'll be prompted to switch to fixed-speed mode). On desktop Chrome/Edge it runs smoothly; behavior on some mobile browsers' speech engines may vary.
 - Settings are stored **locally in the current browser**; switching browsers or clearing site data loses them — back up important config with "Export config".
 - The live demo takes effect once the repo enables GitHub Pages (auto-published on push to `main` by default).
 
