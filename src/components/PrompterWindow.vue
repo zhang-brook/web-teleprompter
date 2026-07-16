@@ -12,9 +12,12 @@ const chars = ref<{ i: number; c: string }[]>([])
 // 滚动状态
 const autoScroll = ref(0) // 自动滚动基准（固定速度累加 / 语音目标缓动）
 const userOffset = ref(0) // 鼠标/触摸额外偏移，保持
+const userOffsetTarget = ref(0) // 偏移目标值，滚轮缓动逼近它
 const targetScroll = ref(0) // 语音模式目标位置
 const spans = ref<HTMLElement[]>([])
 let prevIdx = -1
+
+const WHEEL_MAX_STEP = 80 // 单次滚轮最多移动像素，避免一滚就飞很远找不到位置
 
 // 监听脚本变化，重建字符与 span 缓存
 watch(
@@ -46,7 +49,7 @@ function charIndexAt(y: number): number {
   let ans = 0
   while (lo <= hi) {
     const mid = (lo + hi) >> 1
-    if (arr[mid].offsetTop <= y) {
+    if (arr[mid]!.offsetTop <= y) {
       ans = mid
       lo = mid + 1
     } else {
@@ -92,6 +95,7 @@ watch(
     if (running) {
       autoScroll.value = 0
       userOffset.value = 0
+      userOffsetTarget.value = 0
       targetScroll.value = 0
       resetHighlight()
       nextTick(collectSpans)
@@ -121,6 +125,12 @@ function tick(now: number) {
   if (autoScroll.value > max) autoScroll.value = max
   if (autoScroll.value < 0) autoScroll.value = 0
 
+  // 鼠标/触摸偏移缓动逼近目标值（不直接跳变）
+  const ke = 1 - Math.exp(-dt / 140)
+  userOffset.value += (userOffsetTarget.value - userOffset.value) * ke
+  if (userOffset.value > max) userOffset.value = max
+  if (userOffset.value < 0) userOffset.value = 0
+
   let total = autoScroll.value + userOffset.value
   if (total > max) total = max
   if (total < 0) total = 0
@@ -145,18 +155,23 @@ function tick(now: number) {
 // ===== 鼠标滚轮 / 触摸额外滚动（偏移保持）=====
 function onWheel(e: WheelEvent) {
   e.preventDefault()
-  userOffset.value += e.deltaY
+  // 限制单次位移，并累加到目标值由动画循环缓动逼近
+  const d = Math.max(-WHEEL_MAX_STEP, Math.min(WHEEL_MAX_STEP, e.deltaY))
+  userOffsetTarget.value += d
 }
 
 let touchStartY = 0
 let touchStartOffset = 0
 function onTouchStart(e: TouchEvent) {
-  touchStartY = e.touches[0].clientY
+  touchStartY = e.touches[0]!.clientY
   touchStartOffset = userOffset.value
 }
 function onTouchMove(e: TouchEvent) {
   e.preventDefault()
-  userOffset.value = touchStartOffset + (touchStartY - e.touches[0].clientY)
+  // 触摸为直接拖拽，立即跟随（目标与当前同步，缓动无副作用）
+  const val = touchStartOffset + (touchStartY - e.touches[0]!.clientY)
+  userOffset.value = val
+  userOffsetTarget.value = val
 }
 
 // ===== 拖拽移动 / 缩放 =====
