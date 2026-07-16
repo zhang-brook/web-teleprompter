@@ -26,6 +26,7 @@ function defaultWin(): WinGeom {
   return { x: Math.round(vw / 2 - 300), y: 90, w: 600, h: Math.min(420, vh - 180) }
 }
 
+// 完整应用状态（含运行时字段，不全部参与配置持久化）
 export const state = reactive({
   // 脚本文本
   script: '',
@@ -64,6 +65,73 @@ export const state = reactive({
   // 语音识别临时文本（用于界面展示）
   interimText: '',
 })
+
+/**
+ * 可序列化配置：从 state 中提取需要保存/导出的用户设置字段。
+ * 运行时字段（running/paused/matchedNorm/interimText）与派生字段（normInfo）不纳入。
+ */
+export const usable: (keyof typeof state)[] = [
+  'script',
+  'mode',
+  'speed',
+  'fontSize',
+  'fontFamily',
+  'color',
+  'background',
+  'lineHeight',
+  'flipH',
+  'flipV',
+  'rotation',
+  'win',
+]
+
+export type AppConfig = Pick<typeof state, (typeof usable)[number]>
+
+export function defaultConfig(): AppConfig {
+  const base = { ...state }
+  const cfg = {} as AppConfig
+  for (const k of usable) {
+    // 深拷贝窗口几何，避免引用同一对象
+    if (k === 'win') {
+      cfg.win = { ...(base.win as WinGeom) }
+    } else {
+      // @ts-expect-error 动态赋值
+      cfg[k] = base[k]
+    }
+  }
+  return cfg
+}
+
+export function toConfig(): AppConfig {
+  const cfg = {} as AppConfig
+  for (const k of usable) {
+    if (k === 'win') {
+      cfg.win = { ...(state.win as WinGeom) }
+    } else {
+      // @ts-expect-error 动态赋值
+      cfg[k] = state[k]
+    }
+  }
+  return cfg
+}
+
+export function applyConfig(cfg: Partial<AppConfig>) {
+  for (const k of usable) {
+    if (k in cfg && cfg[k] !== undefined) {
+      if (k === 'win') {
+        state.win = { ...(cfg.win as WinGeom) }
+      } else {
+        // @ts-expect-error 动态赋值
+        state[k] = cfg[k]
+      }
+    }
+  }
+  rebuildNorm()
+}
+
+export function resetConfig() {
+  applyConfig(defaultConfig())
+}
 
 // 脚本变化时重建归一化信息并重置匹配进度
 export function rebuildNorm() {
