@@ -1,5 +1,7 @@
 # Web Teleprompter
 
+> English | [中文](README.zh-CN.md)
+
 Turn your script into a teleprompter that scrolls **by itself**: it follows your voice as you speak, or rolls at a steady, fixed speed. Perfect for live selling, online teaching, short-video voiceovers, presentations — anything where you need to read from a script without touching the mouse.
 
 No install. No sign-up. Just open it in a browser and start reading.
