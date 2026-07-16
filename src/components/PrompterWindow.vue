@@ -154,12 +154,22 @@ function tick(now: number) {
   raf = requestAnimationFrame(tick)
 }
 
-// ===== 鼠标滚轮 / 触摸额外滚动（偏移保持）=====
+// ===== 鼠标滚轮 / 触摸额外滚动（偏移保持，未开始时也可滚动浏览）=====
+function clampOffsetTarget() {
+  const vp = viewportRef.value
+  const ct = contentRef.value
+  if (!vp || !ct) return
+  const max = Math.max(0, ct.scrollHeight - vp.clientHeight)
+  if (userOffsetTarget.value > max) userOffsetTarget.value = max
+  if (userOffsetTarget.value < 0) userOffsetTarget.value = 0
+}
+
 function onWheel(e: WheelEvent) {
   e.preventDefault()
   // 限制单次位移，并累加到目标值由动画循环缓动逼近
   const d = Math.max(-WHEEL_MAX_STEP, Math.min(WHEEL_MAX_STEP, e.deltaY))
   userOffsetTarget.value += d
+  clampOffsetTarget()
 }
 
 let touchStartY = 0
@@ -174,6 +184,7 @@ function onTouchMove(e: TouchEvent) {
   const val = touchStartOffset + (touchStartY - e.touches[0]!.clientY)
   userOffset.value = val
   userOffsetTarget.value = val
+  clampOffsetTarget()
 }
 
 // 拖拽朗读线调整其位置（视口高度比例）
