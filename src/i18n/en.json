@@ -65,5 +65,17 @@
   "prompter.title": "Teleprompter",
   "prompter.readLineGrip": "Drag to adjust the read line",
   "prompter.resize": "Drag to resize",
-  "prompter.dragHandle": "Drag to move the floating window"
+  "prompter.dragHandle": "Drag to move the floating window",
+  "speech.family.han": "Chinese",
+  "speech.family.japanese": "Japanese",
+  "speech.family.korean": "Korean",
+  "speech.family.cyrillic": "Russian",
+  "speech.family.latin": "English / Latin",
+  "speech.langCheckMixedTitle": "Mixed-language script detected",
+  "speech.langCheckMixed": "The browser can only recognize one language at a time and does not support mixed recognition (e.g. Chinese + English). Please use a single-language script, or keep your spoken language consistent.",
+  "speech.langCheckMismatchTitle": "Recognition language may not match",
+  "speech.langCheckMismatch": "The script's main language is \"{detected}\", which differs from the selected recognition language \"{selected}\". Recognition may be inaccurate. Please go back and choose the correct language, or continue anyway.",
+  "action.backToSelect": "Back to select",
+  "action.continueStart": "Continue anyway",
+  "panel.recLangMonoHint": "Note: only a single language can be recognized at a time; mixed recognition (e.g. Chinese + English) is not supported by the browser."
 }

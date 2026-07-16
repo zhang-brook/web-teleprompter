@@ -65,5 +65,17 @@
   "prompter.title": "提詞器",
   "prompter.readLineGrip": "拖動調整朗讀線位置",
   "prompter.resize": "拖曳縮放",
-  "prompter.dragHandle": "拖曳移動浮動窗"
+  "prompter.dragHandle": "拖曳移動浮動窗",
+  "speech.family.han": "中文",
+  "speech.family.japanese": "日語",
+  "speech.family.korean": "韓語",
+  "speech.family.cyrillic": "俄語",
+  "speech.family.latin": "英文/拉丁語系",
+  "speech.langCheckMixedTitle": "偵測到文稿為混合語言",
+  "speech.langCheckMixed": "瀏覽器每次僅能辨識單一語言，不支援中文、英文等混合辨識。請改為單一語言文稿，或保持純口播語言一致。",
+  "speech.langCheckMismatchTitle": "辨識語言可能不一致",
+  "speech.langCheckMismatch": "文稿主語言為「{detected}」，與所選辨識語言「{selected}」不一致，辨識可能不準確。請返回選擇正確的語言，或確認後繼續。",
+  "action.backToSelect": "返回選擇",
+  "action.continueStart": "繼續開始",
+  "panel.recLangMonoHint": "注意：每次僅能辨識單一語言，瀏覽器不支援中文、英文等混合語言辨識。"
 }

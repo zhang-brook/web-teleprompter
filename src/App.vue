@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import ControlPanel from './components/ControlPanel.vue'
 import PrompterWindow from './components/PrompterWindow.vue'
 import { state, initPersist, initTheme, rebuildNorm } from './store'
 import { useSpeechRecognition } from './composables/useSpeechRecognition'
 import { normalizeText, alignForward } from './utils/match'
+import { checkSpeechLanguage, type SpeechLangCheck } from './utils/langDetect'
+import { recLangLabel } from './utils/recLangs'
 import { t } from './i18n'
 import LocaleSwitcher from './components/LocaleSwitcher.vue'
 
@@ -13,6 +15,20 @@ const showPanel = ref(typeof window !== 'undefined' ? window.innerWidth >= 768 :
 // 记录开始前的面板展示状态，停止后据此决定是否还原
 let panelShownBeforeStart = true
 const toast = ref('')
+// 语音开始前语言检查结果：非 null 时弹出确认/提醒对话框，尚未真正开始
+const langCheck = ref<SpeechLangCheck | null>(null)
+
+// 将检查结果整理为模板可直接使用的展示数据（含已翻译的标签），避免模板内类型收窄问题
+const langCheckInfo = computed(() => {
+  const c = langCheck.value
+  if (!c || c.type === 'ok') return null
+  if (c.type === 'mixed') return { kind: 'mixed' as const }
+  return {
+    kind: 'mismatch' as const,
+    detected: t('speech.family.' + c.detected),
+    selected: recLangLabel(state.recLang),
+  }
+})
 
 initPersist()
 initTheme()
@@ -53,6 +69,18 @@ function start() {
     setTimeout(() => (toast.value = ''), 4000)
     return
   }
+  // 语音跟随：开始前先校验文稿语言，避免用户用错语言或混语言口播
+  if (state.mode === 'speech') {
+    const res = checkSpeechLanguage(state.script, state.recLang)
+    if (res.type !== 'ok') {
+      langCheck.value = res
+      return
+    }
+  }
+  doStart()
+}
+
+function doStart() {
   state.matchedNorm = 0
   state.interimText = ''
   panelShownBeforeStart = showPanel.value
@@ -60,6 +88,18 @@ function start() {
   state.paused = false
   showPanel.value = false // 开始后自动隐藏设置面板，进入纯净口播视图
   if (state.mode === 'speech') speech.start(handleText, state.recLang)
+}
+
+// 弹窗“返回选择”：关闭对话框并展开设置面板，方便用户改语言
+function backToSelect() {
+  langCheck.value = null
+  showPanel.value = true
+}
+
+// 弹窗“继续开始”：用户已知晓风险仍要开始
+function continueStart() {
+  langCheck.value = null
+  doStart()
 }
 
 function stop() {
@@ -149,6 +189,21 @@ function onDrop(e: DragEvent) {
     <div v-if="speech.loading.value" class="speech-loading">
       <div class="spinner"></div>
       <span class="speech-loading-text">{{ t('speech.loading') }}</span>
+    </div>
+
+    <div v-if="langCheckInfo" class="lang-check">
+      <div class="lang-check-card">
+        <h3 v-if="langCheckInfo.kind === 'mixed'">{{ t('speech.langCheckMixedTitle') }}</h3>
+        <h3 v-else>{{ t('speech.langCheckMismatchTitle') }}</h3>
+        <p v-if="langCheckInfo.kind === 'mixed'">{{ t('speech.langCheckMixed') }}</p>
+        <p v-else>
+          {{ t('speech.langCheckMismatch', { detected: langCheckInfo.detected, selected: langCheckInfo.selected }) }}
+        </p>
+        <div class="lang-check-actions">
+          <button class="primary" @click="backToSelect">{{ t('action.backToSelect') }}</button>
+          <button class="weak" @click="continueStart">{{ t('action.continueStart') }}</button>
+        </div>
+      </div>
     </div>
 
     <div v-if="isDragging" class="drop-overlay">
@@ -304,6 +359,61 @@ function onDrop(e: DragEvent) {
   to {
     transform: rotate(360deg);
   }
+}
+.lang-check {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  padding: 16px;
+  box-sizing: border-box;
+}
+.lang-check-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 18px 20px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+.lang-check-card h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: var(--text);
+}
+.lang-check-card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+.lang-check-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+.lang-check-actions button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-input);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+}
+.lang-check-actions button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+.lang-check-actions button.weak {
+  opacity: 0.7;
 }
 
 @media (max-width: 767px) {

@@ -65,5 +65,17 @@
   "prompter.title": "提词器",
   "prompter.readLineGrip": "拖动调整朗读线位置",
   "prompter.resize": "拖拽缩放",
-  "prompter.dragHandle": "拖拽移动浮窗"
+  "prompter.dragHandle": "拖拽移动浮窗",
+  "speech.family.han": "中文",
+  "speech.family.japanese": "日语",
+  "speech.family.korean": "韩语",
+  "speech.family.cyrillic": "俄语",
+  "speech.family.latin": "英文/拉丁语系",
+  "speech.langCheckMixedTitle": "检测到文稿为混合语言",
+  "speech.langCheckMixed": "浏览器每次仅能识别单一语言，不支持中文、英文等混合识别。请改为单一语言文稿，或保持纯口播语言一致。",
+  "speech.langCheckMismatchTitle": "识别语言可能不一致",
+  "speech.langCheckMismatch": "文稿主语言为「{detected}」，与所选识别语言「{selected}」不一致，识别可能不准确。请返回选择正确的语言，或确认后继续。",
+  "action.backToSelect": "返回选择",
+  "action.continueStart": "继续开始",
+  "panel.recLangMonoHint": "注意：每次仅能识别单一语言，浏览器不支持中文、英文等混合语言识别。"
 }
