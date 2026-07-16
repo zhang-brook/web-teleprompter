@@ -22,6 +22,8 @@
   "panel.theme": "主題",
   "panel.scrollMode": "捲動模式",
   "panel.speechHint": "語音跟隨：說出文稿內容，文字會自動捲動到目前讀到/說到的位置並置中。已自動處理停頓氣口與換種表述；可用滑鼠滾輪在捲動時上下微調（偏移保持）。",
+  "panel.speed": "速度：{value} 像素/秒",
+  "panel.wheelStep": "滾輪步長：{value} 像素",
   "panel.appearance": "外觀",
   "panel.fontSize": "字號：{value}px",
   "panel.textColor": "文字顏色",

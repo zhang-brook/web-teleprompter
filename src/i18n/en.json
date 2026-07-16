@@ -22,6 +22,8 @@
   "panel.theme": "Theme",
   "panel.scrollMode": "Scroll Mode",
   "panel.speechHint": "Speech following: speak the script and the text auto-scrolls to center on what you are reading/saying. Pauses and rephrasings are handled automatically; use the mouse wheel while scrolling to fine-tune up/down (offset is kept).",
+  "panel.speed": "Speed: {value} px/s",
+  "panel.wheelStep": "Wheel step: {value} px",
   "panel.appearance": "Appearance",
   "panel.fontSize": "Font size: {value}px",
   "panel.textColor": "Text color",
