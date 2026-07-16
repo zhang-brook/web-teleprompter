@@ -356,8 +356,10 @@ function stop() {
             fontSize: state.fontSize + 'px',
             fontFamily: state.fontFamily,
             lineHeight: state.lineHeight,
-            overflowWrap: state.breakWords ? 'break-word' : 'normal',
-            wordBreak: state.breakWords ? 'break-word' : 'normal',
+            // 始终防止超长单词溢出浮窗：必要时才断词
+            overflowWrap: 'break-word',
+            // 勾选时在行尾把英文单词拆开放两行（break-all 在逐字 span 结构下也能稳定断词）
+            wordBreak: state.breakWords ? 'break-all' : 'normal',
           }"
         >
           <span v-for="ch in chars" :key="ch.i" :data-i="ch.i">{{ ch.c }}</span>
