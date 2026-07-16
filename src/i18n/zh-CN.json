@@ -23,6 +23,8 @@
   "panel.theme": "主题",
   "panel.scrollMode": "滚动模式",
   "panel.speechHint": "语音跟随：说出文稿内容，文字会自动滚到当前读到/说到的位置并居中。已自动处理停顿气口与换种表述；可用鼠标滚轮在滚动时上下微调（偏移保持）。",
+  "panel.recLang": "语音识别语言",
+  "panel.recLangInvalid": "当前配置的语言不在可选列表中，将回退使用简体中文（普通话）。",
   "panel.speed": "速度：{value} 像素/秒",
   "panel.wheelStep": "滚轮步长：{value} 像素",
   "panel.appearance": "外观",

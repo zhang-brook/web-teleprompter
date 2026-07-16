@@ -61,7 +61,7 @@ function start() {
   state.running = true
   state.paused = false
   showPanel.value = false // 开始后自动隐藏设置面板，进入纯净口播视图
-  if (state.mode === 'speech') speech.start(handleFinal)
+  if (state.mode === 'speech') speech.start(handleFinal, state.recLang)
 }
 
 function stop() {

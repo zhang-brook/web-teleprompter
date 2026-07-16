@@ -71,7 +71,7 @@ export function useSpeechRecognition() {
     else minLoadTimer = window.setTimeout(() => { minLoadTimer = null; hideLoading() }, MIN - elapsed)
   }
 
-  function start(cb: (text: string) => void) {
+  function start(cb: (text: string) => void, lang?: string) {
     if (!supported) {
       error.value = t('speech.unsupported')
       return
@@ -82,7 +82,7 @@ export function useSpeechRecognition() {
     rec = new Ctor()
     rec.continuous = true
     rec.interimResults = true
-    rec.lang = 'zh-CN'
+    rec.lang = lang || 'zh-CN'
 
     rec.onstart = () => {
       console.log('onstart')

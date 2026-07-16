@@ -23,6 +23,8 @@
   "panel.theme": "Theme",
   "panel.scrollMode": "Scroll Mode",
   "panel.speechHint": "Speech following: speak the script and the text auto-scrolls to center on what you are reading/saying. Pauses and rephrasings are handled automatically; use the mouse wheel while scrolling to fine-tune up/down (offset is kept).",
+  "panel.recLang": "Recognition language",
+  "panel.recLangInvalid": "The configured language is not in the options list; it will fall back to Mandarin Chinese (Simplified).",
   "panel.speed": "Speed: {value} px/s",
   "panel.wheelStep": "Wheel step: {value} px",
   "panel.appearance": "Appearance",

@@ -11,6 +11,25 @@ const fonts = [
   { tkey: 'font.mono', value: '"Cascadia Code", Consolas, monospace' },
 ]
 
+// 语音识别可选语言（BCP-47 标签，原生写法不随界面语言翻译）
+const recLangs = [
+  { value: 'zh-CN', label: '简体中文（普通话）' },
+  { value: 'zh-TW', label: '繁體中文（國語）' },
+  { value: 'en-US', label: 'English (US)' },
+  { value: 'en-GB', label: 'English (UK)' },
+  { value: 'ja-JP', label: '日本語' },
+  { value: 'ko-KR', label: '한국어' },
+  { value: 'fr-FR', label: 'Français' },
+  { value: 'de-DE', label: 'Deutsch' },
+  { value: 'es-ES', label: 'Español' },
+  { value: 'ru-RU', label: 'Русский' },
+]
+
+// 保证已选语言仍在可选列表中（兼容旧配置/导入的非法值）
+function recLangValid(v: string): boolean {
+  return recLangs.some((l) => l.value === v)
+}
+
 function onScriptInput(e: Event) {
   state.script = (e.target as HTMLTextAreaElement).value
   rebuildNorm()
@@ -109,6 +128,14 @@ function onImportFile(e: Event) {
       </div>
 
       <p v-else class="hint">{{ t('panel.speechHint') }}</p>
+
+      <div v-if="state.mode === 'speech'" class="field">
+        <label>{{ t('panel.recLang') }}</label>
+        <select v-model="state.recLang">
+          <option v-for="l in recLangs" :key="l.value" :value="l.value">{{ l.label }}</option>
+        </select>
+        <p v-if="!recLangValid(state.recLang)" class="hint">{{ t('panel.recLangInvalid') }}</p>
+      </div>
 
       <div class="field">
         <label>{{ t('panel.wheelStep', { value: state.wheelStep }) }}</label>

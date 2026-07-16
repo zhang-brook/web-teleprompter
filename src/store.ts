@@ -36,6 +36,9 @@ function makeDefaults() {
     // 滚动模式：fixed=固定速度；speech=语音跟随
     mode: 'fixed' as Mode,
 
+    // 语音识别语言（BCP-47，如 zh-CN / en-US）
+    recLang: 'zh-CN',
+
     // 运行 / 暂停
     running: false,
     paused: false,
@@ -94,6 +97,7 @@ export const state = reactive(makeDefaults())
 export const usable: (keyof typeof state)[] = [
   'script',
   'mode',
+  'recLang',
   'speed',
   'wheelStep',
   'fontSize',
@@ -149,6 +153,11 @@ export function applyConfig(cfg: Partial<AppConfig>) {
         // 朗读线位置以比例(0~1)存储，兼容旧配置中误存的百分比数值
         const r = cfg[k] as unknown as number
         state.readLine = Math.max(0.05, Math.min(0.95, r > 1 ? r / 100 : r))
+      } else if (k === 'recLang') {
+        // 语音识别语言：仅接受已知的 BCP-47 标签，非法值回退到默认 zh-CN
+        const v = cfg[k] as unknown as string
+        const KNOWN = ['zh-CN', 'zh-TW', 'en-US', 'en-GB', 'ja-JP', 'ko-KR', 'fr-FR', 'de-DE', 'es-ES', 'ru-RU']
+        state.recLang = KNOWN.includes(v) ? v : 'zh-CN'
       } else {
         // @ts-expect-error 动态赋值
         state[k] = cfg[k]
