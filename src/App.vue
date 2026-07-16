@@ -8,6 +8,8 @@ import { normalizeText, alignForward } from './utils/match'
 
 const speech = useSpeechRecognition()
 const showPanel = ref(typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
+// 记录开始前的面板展示状态，停止后据此决定是否还原
+let panelShownBeforeStart = true
 const toast = ref('')
 
 initPersist()
@@ -53,6 +55,7 @@ function start() {
   state.matchedNorm = 0
   state.interimText = ''
   recNormAcc = ''
+  panelShownBeforeStart = showPanel.value
   state.running = true
   state.paused = false
   showPanel.value = false // 开始后自动隐藏设置面板，进入纯净口播视图
@@ -66,6 +69,11 @@ function stop() {
   recNormAcc = ''
   state.matchedNorm = 0
   state.interimText = ''
+  // 停止前若面板处于隐藏状态（通常由开始自动隐藏所致），则还原到开始前的展示状态；
+  // 若停止前面板已展开（用户运行中手动展开过），则保持展开，不恢复。
+  if (!showPanel.value) {
+    showPanel.value = panelShownBeforeStart
+  }
 }
 
 // ===== 拖入 txt 文档导入文稿 =====
