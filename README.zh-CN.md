@@ -4,8 +4,7 @@
 适合直播带货、录课教学、短视频口播、演讲汇报等一切需要「照稿说」的场景。
 纯网页、零安装，打开浏览器就能用。
 
-> 🔗 在线演示：<https://zhang-brook.github.io/web-teleprompter/>
-> 💾 项目仓库：<https://github.com/zhang-brook/web-teleprompter>
+> 🔗 [在线演示](https://zhang-brook.github.io/web-teleprompter/) 💾 [项目仓库](https://github.com/zhang-brook/web-teleprompter)
 
 ---
 
