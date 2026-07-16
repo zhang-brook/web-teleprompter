@@ -202,16 +202,39 @@ function onTouchMove(e: TouchEvent) {
   clampOffsetTarget()
 }
 
+// 将屏幕坐标反变换到 stage 本地坐标（抵消旋转/翻转），使朗读线拖拽在任意变换下都正确
+function localFromClient(clientX: number, clientY: number) {
+  const vp = viewportRef.value!
+  const rect = vp.getBoundingClientRect()
+  const gx = clientX - rect.left
+  const gy = clientY - rect.top
+  const W = rect.width
+  const H = rect.height
+  const m = new DOMMatrix()
+  if (state.flipH) m.scaleSelf(-1, 1)
+  if (state.flipV) m.scaleSelf(1, -1)
+  m.rotateSelf(state.rotation)
+  const cx = W / 2
+  const cy = H / 2
+  const full = new DOMMatrix()
+    .translate(cx, cy)
+    .multiply(m)
+    .multiply(new DOMMatrix().translate(-cx, -cy))
+  const p = full.inverse().transformPoint(new DOMPoint(gx, gy))
+  return { y: p.y, h: H }
+}
+
 // 拖拽朗读线调整其位置（视口高度比例）
 function startDragReadLine(e: PointerEvent) {
   e.preventDefault()
   e.stopPropagation()
-  const vp = viewportRef.value!
-  const rect = vp.getBoundingClientRect()
   const move = (ev: PointerEvent) => {
-    const y = ev.clientY - rect.top
-    state.readLine = Math.max(0.05, Math.min(0.95, y / rect.height))
+    const loc = localFromClient(ev.clientX, ev.clientY)
+    if (loc.h > 0) {
+      state.readLine = Math.max(0.05, Math.min(0.95, loc.y / loc.h))
+    }
   }
+  move(e)
   const up = () => {
     window.removeEventListener('pointermove', move)
     window.removeEventListener('pointerup', up)
@@ -337,17 +360,17 @@ function stop() {
         >
           <span v-for="ch in chars" :key="ch.i" :data-i="ch.i">{{ ch.c }}</span>
         </div>
+        <div
+          class="pw-readline"
+          :style="{ top: state.readLine * 100 + '%' }"
+          @pointerdown="startDragReadLine"
+          title="拖动调整朗读线位置"
+        >
+          <span class="pw-readline-grip"></span>
+        </div>
       </div>
       <div v-if="state.mode === 'speech' && state.interimText" class="pw-interim">
         {{ state.interimText }}
-      </div>
-      <div
-        class="pw-readline"
-        :style="{ top: state.readLine * 100 + '%' }"
-        @pointerdown="startDragReadLine"
-        title="拖动调整朗读线位置"
-      >
-        <span class="pw-readline-grip"></span>
       </div>
     </div>
 
@@ -415,6 +438,7 @@ function stop() {
   touch-action: none;
 }
 .pw-stage {
+  position: relative;
   width: 100%;
   height: 100%;
   transform-origin: center center;
