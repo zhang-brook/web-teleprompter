@@ -356,6 +356,7 @@ function stop() {
             fontSize: state.fontSize + 'px',
             fontFamily: state.fontFamily,
             lineHeight: state.lineHeight,
+            overflowWrap: state.breakWords ? 'break-word' : 'normal',
             wordBreak: state.breakWords ? 'break-word' : 'normal',
           }"
         >
@@ -447,7 +448,6 @@ function stop() {
 .pw-content {
   position: relative;
   white-space: pre-wrap;
-  word-break: normal;
   padding: 12px 16px;
   will-change: transform;
   min-height: 100%;
