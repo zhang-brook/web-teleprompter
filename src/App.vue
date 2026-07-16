@@ -2,13 +2,15 @@
 import { ref, watch } from 'vue'
 import ControlPanel from './components/ControlPanel.vue'
 import PrompterWindow from './components/PrompterWindow.vue'
-import { state } from './store'
+import { state, initTheme } from './store'
 import { useSpeechRecognition } from './composables/useSpeechRecognition'
 import { normalizeText, alignForward } from './utils/match'
 
 const speech = useSpeechRecognition()
 const showPanel = ref(typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
 const toast = ref('')
+
+initTheme()
 
 watch(speech.interimText, (v) => {
   state.interimText = v
@@ -82,8 +84,8 @@ function stop() {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #0b0d12;
-  color: #e6e9ef;
+  background: var(--bg-app);
+  color: var(--text);
   overflow: hidden;
 }
 .topbar {
@@ -93,8 +95,8 @@ function stop() {
   align-items: center;
   justify-content: space-between;
   padding: 0 14px;
-  background: #14171e;
-  border-bottom: 1px solid #232833;
+  background: var(--bg-topbar);
+  border-bottom: 1px solid var(--border);
 }
 .brand {
   font-weight: 700;
@@ -107,15 +109,16 @@ function stop() {
 .actions button {
   padding: 7px 14px;
   border-radius: 8px;
-  border: 1px solid #2a2f3a;
-  background: #1b1f27;
-  color: #e6e9ef;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-card);
+  color: var(--text);
   cursor: pointer;
   font-size: 13px;
 }
 .actions button.primary {
-  background: #2f6df6;
-  border-color: #2f6df6;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
 }
 .actions button.ghost {
   background: transparent;
@@ -132,8 +135,8 @@ function stop() {
 .sidebar {
   width: 340px;
   flex: 0 0 340px;
-  border-right: 1px solid #232833;
-  background: #0f1218;
+  border-right: 1px solid var(--border);
+  background: var(--bg-panel);
   min-height: 0;
 }
 .stage {
@@ -147,9 +150,9 @@ function stop() {
   left: 50%;
   bottom: 20px;
   transform: translateX(-50%);
-  background: rgba(20, 23, 30, 0.95);
-  border: 1px solid #2a2f3a;
-  color: #ffd54f;
+  background: var(--toast-bg);
+  border: 1px solid var(--toast-border);
+  color: var(--toast-text);
   padding: 10px 16px;
   border-radius: 8px;
   font-size: 13px;

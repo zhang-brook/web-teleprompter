@@ -39,6 +39,15 @@ function resetWin() {
     </section>
 
     <section class="sec">
+      <h3>主题</h3>
+      <div class="seg">
+        <button :class="{ active: state.theme === 'dark' }" @click="state.theme = 'dark'">深色</button>
+        <button :class="{ active: state.theme === 'light' }" @click="state.theme = 'light'">浅色</button>
+        <button :class="{ active: state.theme === 'system' }" @click="state.theme = 'system'">跟随系统</button>
+      </div>
+    </section>
+
+    <section class="sec">
       <h3>滚动模式</h3>
       <div class="seg">
         <button :class="{ active: state.mode === 'fixed' }" @click="state.mode = 'fixed'">
@@ -126,24 +135,24 @@ function resetWin() {
   box-sizing: border-box;
 }
 .sec {
-  background: #1b1f27;
-  border: 1px solid #2a2f3a;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
   border-radius: 10px;
   padding: 12px;
 }
 .sec h3 {
   margin: 0 0 10px;
   font-size: 14px;
-  color: #9aa4b2;
+  color: var(--text-dim);
   font-weight: 600;
 }
 .script {
   width: 100%;
   height: 160px;
   resize: vertical;
-  background: #0f1218;
-  color: #e6e9ef;
-  border: 1px solid #2a2f3a;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
   padding: 10px;
   font-size: 14px;
@@ -164,16 +173,16 @@ function resetWin() {
 }
 .field label {
   font-size: 13px;
-  color: #c2c9d6;
+  color: var(--text);
 }
 input[type='range'] {
   width: 100%;
 }
 select,
 input[type='color'] {
-  background: #0f1218;
-  color: #e6e9ef;
-  border: 1px solid #2a2f3a;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border-soft);
   border-radius: 6px;
   padding: 4px;
 }
@@ -190,30 +199,30 @@ input[type='color'] {
   flex: 1;
   min-width: 60px;
   padding: 8px 6px;
-  background: #0f1218;
-  color: #c2c9d6;
-  border: 1px solid #2a2f3a;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
 }
 button.active {
-  background: #2f6df6;
-  color: #fff;
-  border-color: #2f6df6;
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
 }
 .wide {
   width: 100%;
   padding: 8px;
-  background: #0f1218;
-  color: #c2c9d6;
-  border: 1px solid #2a2f3a;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
   cursor: pointer;
 }
 .hint {
   font-size: 12px;
-  color: #8a93a3;
+  color: var(--text-mute);
   line-height: 1.5;
   margin: 8px 0 0;
 }

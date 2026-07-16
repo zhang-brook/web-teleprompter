@@ -10,8 +10,46 @@ body,
 }
 body {
   font-family: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  background: #0b0d12;
+  background: var(--bg-app);
+  color: var(--text);
 }
 button {
   font-family: inherit;
+}
+
+/* ===== 主题变量（默认深色） ===== */
+:root {
+  --bg-app: #0b0d12;
+  --bg-topbar: #14171e;
+  --bg-panel: #0f1218;
+  --bg-card: #1b1f27;
+  --bg-input: #0f1218;
+  --border: #232833;
+  --border-soft: #2a2f3a;
+  --text: #e6e9ef;
+  --text-dim: #9aa4b2;
+  --text-mute: #8a93a3;
+  --accent: #2f6df6;
+  --accent-text: #ffffff;
+  --toast-bg: rgba(20, 23, 30, 0.95);
+  --toast-border: #2a2f3a;
+  --toast-text: #ffd54f;
+}
+
+:root[data-theme='light'] {
+  --bg-app: #f2f4f8;
+  --bg-topbar: #ffffff;
+  --bg-panel: #eef1f6;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --border: #d8dde6;
+  --border-soft: #cdd4df;
+  --text: #1b1f27;
+  --text-dim: #5a6675;
+  --text-mute: #6b7480;
+  --accent: #2f6df6;
+  --accent-text: #ffffff;
+  --toast-bg: rgba(255, 255, 255, 0.96);
+  --toast-border: #cdd4df;
+  --toast-text: #b8860b;
 }

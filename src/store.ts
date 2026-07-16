@@ -1,4 +1,4 @@
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
 import { buildNorm } from './utils/match'
 
 export type Mode = 'fixed' | 'speech'
@@ -51,6 +51,9 @@ export const state = reactive({
   // 朗读线位置（视口高度的比例，0~1）
   readLine: 0.4,
 
+  // 主题：dark / light / system
+  theme: 'system' as 'dark' | 'light' | 'system',
+
   // 变换：水平翻转、垂直翻转、任意角度旋转
   flipH: false,
   flipV: false,
@@ -83,6 +86,7 @@ export const usable: (keyof typeof state)[] = [
   'background',
   'lineHeight',
   'readLine',
+  'theme',
   'flipH',
   'flipV',
   'rotation',
@@ -150,4 +154,21 @@ export function transformStyle(): string {
   if (state.flipV) parts.push('scaleY(-1)')
   parts.push(`rotate(${state.rotation}deg)`)
   return parts.join(' ')
+}
+
+// ===== 主题 =====
+function applyTheme() {
+  if (typeof document === 'undefined') return
+  const t = state.theme
+  const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches
+  const effective = t === 'system' ? (prefersLight ? 'light' : 'dark') : t
+  document.documentElement.dataset.theme = effective
+}
+
+export function initTheme() {
+  applyTheme()
+  if (typeof window !== 'undefined') {
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', applyTheme)
+  }
+  watch(() => state.theme, applyTheme)
 }
