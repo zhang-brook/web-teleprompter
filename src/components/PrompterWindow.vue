@@ -146,8 +146,9 @@ watch(
         autoScroll.value = scrollBounds().min
       })
     } else {
-      // 停止后归零，便于未开始时手动浏览也能滚到朗读线上下两端
-      autoScroll.value = 0
+      // 停止后回到「首行在朗读线下方」的初始位置，与刚加载完时的静止态一致，
+      // 便于未开始时手动浏览也能从朗读线附近开始向下阅读
+      autoScroll.value = scrollBounds().min
       userOffset.value = 0
       userOffsetTarget.value = 0
       targetScroll.value = 0
@@ -346,6 +347,9 @@ function syncFullscreen() {
 watch(() => state.windowMode, syncFullscreen)
 
 onMounted(() => {
+// 初始静止态：将首行文案定位到朗读线下方（基准设为下限），
+  // 而非浮窗顶部，避免页面刚加载完时文字顶在窗口最上方
+  autoScroll.value = scrollBounds().min
   nextTick(collectSpans)
   syncFullscreen()
   document.addEventListener('fullscreenchange', () => {
