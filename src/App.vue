@@ -76,6 +76,28 @@ function handleText(text: string) {
   })
   console.log('[APP:handleText] matchedNorm %d -> %d (%s)', before, after, after > before ? 'ADVANCED' : 'STAYED')
   state.matchedNorm = after
+  // final 已确认：若实时预览曾因 interim 误识别而超前，在此回落到已确认位置，避免长期超前
+  if (state.liveNorm > state.matchedNorm) state.liveNorm = state.matchedNorm
+}
+
+// 实时预览回调：composable 回传尚未确认的 interim（实时、边说边变）文本。
+// 把“已确认尾部 + 当前 interim”在相同限长窗口内对齐，从已确认位置向前推进 liveNorm，
+// 使光标在你说话的过程中就跟着走，而不是等一句话 final（换气后）才跟上。
+// 为保证顺滑：liveNorm 只向前推进、不回退，且不低于已确认位置（避免 interim 抖动造成画面后退）。
+function handleLive(interim: string) {
+  if (!interim) return
+  let liveRaw = recWindow + interim
+  if (liveRaw.length > REC_WINDOW_KEEP) {
+    liveRaw = liveRaw.slice(liveRaw.length - REC_WINDOW_KEEP)
+  }
+  const liveNorm = normalizeText(liveRaw)
+  if (!liveNorm) return
+  const after = alignForward(state.normInfo.norm, state.matchedNorm, liveNorm, {
+    back: 40,
+    forward: 300,
+  })
+  if (after > state.liveNorm) state.liveNorm = after
+  if (state.liveNorm < state.matchedNorm) state.liveNorm = state.matchedNorm
 }
 
 function start() {
@@ -102,13 +124,14 @@ function start() {
 
 function doStart() {
   state.matchedNorm = 0
+  state.liveNorm = 0
   state.interimText = ''
   recWindow = ''
   panelShownBeforeStart = showPanel.value
   state.running = true
   state.paused = false
   showPanel.value = false // 开始后自动隐藏设置面板，进入纯净口播视图
-  if (state.mode === 'speech') speech.start(handleText, state.recLang)
+  if (state.mode === 'speech') speech.start(handleText, state.recLang, handleLive)
 }
 
 // 弹窗“返回选择”：关闭对话框并展开设置面板，方便用户改语言
@@ -128,6 +151,7 @@ function stop() {
   state.paused = false
   speech.stop()
   state.matchedNorm = 0
+  state.liveNorm = 0
   state.interimText = ''
   recWindow = ''
   // 停止前若面板处于隐藏状态（通常由开始自动隐藏所致），则还原到开始前的展示状态；

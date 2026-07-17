@@ -42,6 +42,7 @@ export function useSpeechRecognition() {
 
   let rec: SpeechRecognitionLike | null = null
   let onTextCb: ((text: string) => void) | null = null
+  let onLiveCb: ((text: string) => void) | null = null
   let restartTimer: number | null = null
   let loadStart = 0 // 开始加载的时间戳（用于保证最短展示时长）
   let minLoadTimer: number | null = null // 保证最短展示时长的定时器
@@ -73,12 +74,13 @@ export function useSpeechRecognition() {
     else minLoadTimer = window.setTimeout(() => { minLoadTimer = null; hideLoading() }, MIN - elapsed)
   }
 
-  function start(cb: (text: string) => void, lang?: string) {
+  function start(cb: (text: string) => void, lang?: string, onLive?: (text: string) => void) {
     if (!supported) {
       error.value = t('speech.unsupported')
       return
     }
     onTextCb = cb
+    onLiveCb = onLive ?? null
     clearRestart()
     const Ctor = (window.SpeechRecognition || window.webkitSpeechRecognition)!
     rec = new Ctor()
@@ -118,6 +120,9 @@ export function useSpeechRecognition() {
       if (interim !== currentInterim) {
         currentInterim = interim
         interimText.value = interim
+        // 实时预览：把尚未确认的 interim 文本也交给对齐逻辑，
+        // 让光标在说话过程中就跟着走，而不是等一句话 final 才跟上。
+        if (onLiveCb && interim) onLiveCb(interim)
       }
     }
 
@@ -166,6 +171,7 @@ export function useSpeechRecognition() {
     interimText.value = ''
     incrementalAccum = ''
     currentInterim = ''
+    onLiveCb = null
     if (rec) {
       try {
         rec.stop()

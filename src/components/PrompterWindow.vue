@@ -115,18 +115,19 @@ function applyHighlight(newIdx: number) {
 }
 
 // 语音匹配位置变化时，更新目标滚动位置（对齐到朗读线）
+// 使用实时预览位置 liveNorm，使滚动在说话过程中就跟随，而非等一句话 final 才跟上
 watch(
-  () => state.matchedNorm,
+  () => state.liveNorm,
   () => {
     if (state.mode !== 'speech' || !viewportRef.value || !contentRef.value) return
-    const ni = Math.min(state.matchedNorm, state.normInfo.normToOrig.length - 1)
+    const ni = Math.min(state.liveNorm, state.normInfo.normToOrig.length - 1)
     const orig = state.normInfo.normToOrig[Math.max(0, ni)] ?? 0
     const el = spans.value[orig]
     if (!el) return
     const { min, max } = scrollBounds()
     const lineY = viewportRef.value.clientHeight * state.readLine
     targetScroll.value = Math.min(max, Math.max(min, el.offsetTop - lineY + el.offsetHeight / 2))
-    console.log('[SCROLL:targetScroll] matchedNorm=%d orig=%d el.offsetTop=%d targetScroll=%d (bounds=[%d,%d])', state.matchedNorm, orig, el.offsetTop, targetScroll.value, min, max)
+    console.log('[SCROLL:targetScroll] liveNorm=%d orig=%d el.offsetTop=%d targetScroll=%d (bounds=[%d,%d])', state.liveNorm, orig, el.offsetTop, targetScroll.value, min, max)
   },
 )
 
@@ -197,7 +198,7 @@ function tick(now: number) {
   // 高亮当前位置
   let idx: number
   if (state.mode === 'speech') {
-    const ni = Math.min(state.matchedNorm, state.normInfo.normToOrig.length - 1)
+    const ni = Math.min(state.liveNorm, state.normInfo.normToOrig.length - 1)
     idx = state.normInfo.normToOrig[Math.max(0, ni)] ?? 0
   } else {
     const lineY = vh * state.readLine

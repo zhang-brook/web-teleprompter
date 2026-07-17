@@ -79,8 +79,12 @@ function makeDefaults() {
     // 归一化脚本（用于语音匹配）
     normInfo: { norm: '', normToOrig: [], origToNorm: [] } as NormInfo,
 
-    // 语音已匹配到的归一化位置
+    // 语音已匹配到的归一化位置（final 确认的锚点）
     matchedNorm: 0,
+
+    // 语音实时预览位置（由 interim 实时推进，>= matchedNorm）
+    // 用于滚动/高亮跟随，使光标在读的过程中就跟着走，而非等一句话 final 才跟上
+    liveNorm: 0,
 
     // 语音识别临时文本（用于界面展示）
     interimText: '',
@@ -92,7 +96,7 @@ export const state = reactive(makeDefaults())
 
 /**
  * 可序列化配置：从 state 中提取需要保存/导出的用户设置字段。
- * 运行时字段（running/paused/matchedNorm/interimText）与派生字段（normInfo）不纳入。
+ * 运行时字段（running/paused/matchedNorm/liveNorm/interimText）与派生字段（normInfo）不纳入。
  */
 export const usable: (keyof typeof state)[] = [
   'script',
