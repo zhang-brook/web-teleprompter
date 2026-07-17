@@ -14,6 +14,10 @@ const speech = useSpeechRecognition()
 const showPanel = ref(typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
 // 记录开始前的面板展示状态，停止后据此决定是否还原
 let panelShownBeforeStart = true
+// 语音识别滚动缓冲：跨会话累积「已说文本」。composable 现只回传增量 final，
+// 此处限长保留尾部，使每次对齐的文本量恒定（不随说话时长线性增长），避免 O(M^2) 对齐成本膨胀。
+let recWindow = ''
+const REC_WINDOW_KEEP = 700 // 保留尾部字符数，需 > alignForward 的 forward(300)+back(40) 冗余
 const toast = ref('')
 // 语音开始前语言检查结果：非 null 时弹出确认/提醒对话框，尚未真正开始
 const langCheck = ref<SpeechLangCheck | null>(null)
@@ -54,11 +58,16 @@ watch(speech.error, (v) => {
   }
 })
 
-// 语音识别回调：收到“当前会话完整文本（final+interim）”，
-// 在脚本当前位置附近的受限窗口内对齐，推进最新朗读到的位置。
+// 语音识别回调：composable 现只回传“自上次以来的新增 final 文本（增量）”。
+// 此处跨会话累积进限长滚动窗口，再在脚本当前位置附近的受限窗口内对齐，推进最新朗读到的位置。
+// 关键：对齐文本量恒定（≤ REC_WINDOW_KEEP），不再随说话时长增长，故长语音下成本恒定、不会膨胀。
 function handleText(text: string) {
-  const recNorm = normalizeText(text)
-  console.log('[APP:handleText] raw.len=%d recNorm.len=%d recNorm="%s" scriptNorm.len=%d', text.length, recNorm.length, recNorm, state.normInfo.norm.length)
+  recWindow += text
+  if (recWindow.length > REC_WINDOW_KEEP) {
+    recWindow = recWindow.slice(recWindow.length - REC_WINDOW_KEEP)
+  }
+  const recNorm = normalizeText(recWindow)
+  console.log('[APP:handleText] raw.len=%d recNorm.len=%d recNorm="%s" scriptNorm.len=%d', recWindow.length, recNorm.length, recNorm, state.normInfo.norm.length)
   if (!recNorm) return
   const before = state.matchedNorm
   const after = alignForward(state.normInfo.norm, before, recNorm, {
@@ -94,6 +103,7 @@ function start() {
 function doStart() {
   state.matchedNorm = 0
   state.interimText = ''
+  recWindow = ''
   panelShownBeforeStart = showPanel.value
   state.running = true
   state.paused = false
@@ -119,6 +129,7 @@ function stop() {
   speech.stop()
   state.matchedNorm = 0
   state.interimText = ''
+  recWindow = ''
   // 停止前若面板处于隐藏状态（通常由开始自动隐藏所致），则还原到开始前的展示状态；
   // 若停止前面板已展开（用户运行中手动展开过），则保持展开，不恢复。
   if (!showPanel.value) {

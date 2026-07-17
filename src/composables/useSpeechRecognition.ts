@@ -45,6 +45,8 @@ export function useSpeechRecognition() {
   let restartTimer: number | null = null
   let loadStart = 0 // 开始加载的时间戳（用于保证最短展示时长）
   let minLoadTimer: number | null = null // 保证最短展示时长的定时器
+  let incrementalAccum = '' // 跨会话累积的「新增 final」文本，作为增量回调给对齐逻辑（避免每次回传整段）
+  let currentInterim = '' // 当前 interim 文本（仅用于显示，不参与对齐）
 
   function clearRestart() {
     if (restartTimer !== null) {
@@ -92,27 +94,31 @@ export function useSpeechRecognition() {
 
     rec.onresult = (e: SpeechRecognitionEventLike) => {
       console.log('[SR:onresult] resultIndex=%d results.length=%d', e.resultIndex, e.results.length)
-      // 每次事件都拿到本次识别会话“到目前为止”的完整文本（所有结果，final + interim 按序拼接）。
-      // 浏览器在静音/气口后会结束会话并重启，此时 results 自动从头开始，
-      // 因此这里无需手动维护累计文本——从 results 重新拼接即可得到当前会话的完整内容，
-      // 重启后会自动以新会话内容继续在脚本当前位置之后对齐。
-      let text = ''
+      // 增量处理：只把「本次事件新增的 final」追加到跨会话缓冲，回传给对齐逻辑。
+      // 浏览器会在静音/气口后结束会话并重启，重启后 results 从 0 重新计数，
+      // 因此每次 onresult 都拿到“到目前为止的完整文本”——若回传整段，
+      // 单会话内说话越久文本越长，App 端每次都要对整段做 O(M^2) 对齐，成本随时间膨胀。
+      // 这里改为：仅 resultIndex 起（含）的 final 才是新内容（之前已处理过的不再重复追加），
+      // 跨会话累积到 incrementalAccum，回传增量；interim 不稳定，仅用于显示、不参与对齐。
       let interim = ''
-      const chunks: string[] = []
       for (let i = 0; i < e.results.length; i++) {
         const res = e.results[i]!
         const txt = res[0]!.transcript
-        const tag = res.isFinal ? 'FINAL' : 'interim'
-        chunks.push(`#${i}[${tag}]="${txt}"`)
-        text += txt
-        if (!res.isFinal) interim += txt
+        if (res.isFinal) {
+          if (i >= e.resultIndex) incrementalAccum += txt
+        } else {
+          interim += txt
+        }
       }
-      // 关键诊断：把每个 result chunk 的 isFinal/transcript 都打出来，
-      // 可以确认“拼接逻辑”是否丢失了前面已 final 的内容，以及 interim 是否正确。
-      console.log('[SR:onresult] chunks: %s', chunks.join(' '))
-      console.log('[SR:onresult] -> fullText="%s" interim="%s"', text, interim)
-      interimText.value = interim
-      if (text) onTextCb?.(text)
+      if (incrementalAccum) {
+        console.log('[SR:onresult] -> 增量 final（跨会话累积）len=%d "%s"', incrementalAccum.length, incrementalAccum)
+        onTextCb?.(incrementalAccum)
+        incrementalAccum = ''
+      }
+      if (interim !== currentInterim) {
+        currentInterim = interim
+        interimText.value = interim
+      }
     }
 
     rec.onerror = (e: { error?: string }) => {
@@ -158,6 +164,8 @@ export function useSpeechRecognition() {
     hideLoading()
     clearRestart()
     interimText.value = ''
+    incrementalAccum = ''
+    currentInterim = ''
     if (rec) {
       try {
         rec.stop()
