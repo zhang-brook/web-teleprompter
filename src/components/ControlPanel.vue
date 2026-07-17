@@ -143,6 +143,14 @@ function onImportFile(e: Event) {
         <label>{{ t('panel.fontSize', { value: state.fontSize }) }}</label>
         <input type="range" min="16" max="120" step="1" v-model.number="state.fontSize" />
       </div>
+      <div class="field">
+        <label>{{ t('panel.lineHeight', { value: state.lineHeight }) }}</label>
+        <input type="range" min="1" max="3" step="0.1" v-model.number="state.lineHeight" />
+      </div>
+      <div class="field">
+        <label>{{ t('panel.letterSpacing', { value: state.letterSpacing }) }}</label>
+        <input type="range" min="0" max="20" step="0.5" v-model.number="state.letterSpacing" />
+      </div>
       <div class="field row">
         <label>{{ t('panel.textColor') }}</label>
         <input type="color" v-model="state.color" />

@@ -29,6 +29,8 @@
   "panel.wheelStep": "Wheel step: {value} px",
   "panel.appearance": "Appearance",
   "panel.fontSize": "Font size: {value}px",
+  "panel.lineHeight": "Line spacing: {value}",
+  "panel.letterSpacing": "Letter spacing: {value}px",
   "panel.textColor": "Text color",
   "panel.background": "Background",
   "panel.breakWords": "Break English words at line end (wrap to next line)",

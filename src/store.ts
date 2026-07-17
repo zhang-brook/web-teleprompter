@@ -55,6 +55,7 @@ function makeDefaults() {
     color: '#ffffff',
     background: '#000000',
     lineHeight: 1.6,
+    letterSpacing: 0,
 
     // 英文单词是否允许在行尾断开（true=可拆开放两行；false=整词换行）
     breakWords: false,
@@ -109,6 +110,7 @@ export const usable: (keyof typeof state)[] = [
   'color',
   'background',
   'lineHeight',
+  'letterSpacing',
   'breakWords',
   'readLine',
   'theme',

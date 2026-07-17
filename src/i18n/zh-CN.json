@@ -29,6 +29,8 @@
   "panel.wheelStep": "滚轮步长：{value} 像素",
   "panel.appearance": "外观",
   "panel.fontSize": "字号：{value}px",
+  "panel.lineHeight": "行距：{value}",
+  "panel.letterSpacing": "字间距：{value}px",
   "panel.textColor": "文字颜色",
   "panel.background": "背景",
   "panel.breakWords": "英文单词可在行尾断开（拆开放两行）",
