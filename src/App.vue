@@ -100,6 +100,23 @@ function handleLive(interim: string) {
   if (state.liveNorm < state.matchedNorm) state.liveNorm = state.matchedNorm
 }
 
+// 语音模式下，[暂停] 必须真正停止识别引擎，否则暂停期间说话仍会通过回调
+// 推进 matchedNorm/liveNorm，使光标继续前进、恢复时大幅跳变。
+// 恢复时重启引擎，从已确认位置继续跟随。
+watch(
+  () => state.paused,
+  (paused) => {
+    if (state.mode !== 'speech' || !state.running) return
+    if (paused) {
+      speech.stop()
+      // 丢弃暂停前未确认的实时预览位置，避免恢复后光标停留在误识别处
+      if (state.liveNorm > state.matchedNorm) state.liveNorm = state.matchedNorm
+    } else {
+      speech.start(handleText, state.recLang, handleLive)
+    }
+  },
+)
+
 function start() {
   if (!state.script.trim()) {
     toast.value = t('toast.enterScriptFirst')
