@@ -34,6 +34,7 @@
   "panel.textColor": "Text color",
   "panel.background": "Background",
   "panel.breakWords": "Break English words at line end (wrap to next line)",
+  "panel.removeBlankLines": "Remove consecutive blank lines (keep at most one between sections)",
   "panel.readLine": "Read line",
   "panel.readLinePos": "Position (from top): {value}%",
   "panel.readLineHint": "The current reading position aligns to this line; while presenting you can also drag the read line in the floating window to adjust it.",

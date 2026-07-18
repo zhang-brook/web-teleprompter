@@ -34,6 +34,7 @@
   "panel.textColor": "文字颜色",
   "panel.background": "背景",
   "panel.breakWords": "英文单词可在行尾断开（拆开放两行）",
+  "panel.removeBlankLines": "移除连续空白行（每段最多保留一个）",
   "panel.readLine": "朗读线",
   "panel.readLinePos": "位置（距顶部）：{value}%",
   "panel.readLineHint": "当前阅读位置会对齐到该线；口播时也可直接拖动悬浮窗中的朗读线上下调整。",

@@ -1,4 +1,4 @@
-import { reactive, watch } from 'vue'
+import { reactive, watch, computed } from 'vue'
 import { buildNorm } from './utils/match'
 
 export type Mode = 'fixed' | 'speech'
@@ -60,6 +60,9 @@ function makeDefaults() {
     // 英文单词是否允许在行尾断开（true=可拆开放两行；false=整词换行）
     breakWords: false,
 
+    // 是否移除连续空白行（true=每段之间最多保留一个空白行）
+    removeBlankLines: true,
+
     // 朗读线位置（视口高度的比例，0~1）
     readLine: 0.4,
 
@@ -112,6 +115,7 @@ export const usable: (keyof typeof state)[] = [
   'lineHeight',
   'letterSpacing',
   'breakWords',
+  'removeBlankLines',
   'readLine',
   'theme',
   'flipH',
@@ -222,11 +226,44 @@ export function initPersist() {
   watch(() => exportConfig(), persist)
 }
 
+// 合并连续空白行：把连续多个空白行（仅含空白字符的行）压缩为最多一个空白行，
+// 既用于显示也用于语音归一化，保证“看到的内容”与“匹配的内容”一致。
+export function collapseBlankLines(text: string): string {
+  const lines = text.split(/\r\n|\r|\n/)
+  const out: string[] = []
+  let inBlank = false
+  for (const line of lines) {
+    const blank = line.trim() === ''
+    if (blank) {
+      if (!inBlank) {
+        out.push('')
+        inBlank = true
+      }
+      // 连续空白行：跳过，只保留一个
+    } else {
+      out.push(line)
+      inBlank = false
+    }
+  }
+  return out.join('\n')
+}
+
+// 实际用于显示/匹配的文稿：按配置决定是否合并连续空白行
+export const displayScript = computed(() =>
+  state.removeBlankLines ? collapseBlankLines(state.script) : state.script,
+)
+
 // 脚本变化时重建归一化信息并重置匹配进度
 export function rebuildNorm() {
-  state.normInfo = buildNorm(state.script)
+  state.normInfo = buildNorm(displayScript.value)
   state.matchedNorm = 0
 }
+
+// “移除连续空白行”开关变化时需要同步重建归一化信息（与显示内容保持一致）
+watch(
+  () => displayScript.value,
+  () => rebuildNorm(),
+)
 
 // 计算变换样式
 export function transformStyle(): string {

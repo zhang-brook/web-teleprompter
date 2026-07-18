@@ -161,6 +161,10 @@ function onImportFile(e: Event) {
         <input type="checkbox" v-model="state.breakWords" />
         {{ t('panel.breakWords') }}
       </label>
+      <label class="check">
+        <input type="checkbox" v-model="state.removeBlankLines" />
+        {{ t('panel.removeBlankLines') }}
+      </label>
     </section>
 
     <section class="sec">

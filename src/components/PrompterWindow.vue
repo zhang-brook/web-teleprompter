@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
-import { state, transformStyle } from '../store'
+import { state, transformStyle, displayScript } from '../store'
 import { t } from '../i18n'
 
 const emit = defineEmits<{ (e: 'stop'): void }>()
@@ -59,9 +59,9 @@ function relaxedBounds() {
   return { min, max, lo: min - overscroll, hi: max + overscroll }
 }
 
-// 监听脚本变化，重建字符与 span 缓存
+// 监听脚本变化（含“移除连续空白行”开关），重建字符与 span 缓存
 watch(
-  () => state.script,
+  () => displayScript.value,
   (val) => {
     chars.value = Array.from(val).map((c, i) => ({ i, c }))
     nextTick(collectSpans)
