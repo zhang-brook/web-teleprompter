@@ -12,16 +12,21 @@ import LocaleSwitcher from './components/LocaleSwitcher.vue'
 
 const speech = useSpeechRecognition()
 const showPanel = ref(typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
+// Record the panel's shown state before starting, used to decide whether to restore it after stopping.
 // 记录开始前的面板展示状态，停止后据此决定是否还原
 let panelShownBeforeStart = true
+// Speech recognition scroll buffer: cross-session accumulation of "spoken text". The composable now returns only incremental finals,
 // 语音识别滚动缓冲：跨会话累积「已说文本」。composable 现只回传增量 final，
-// 此处限长保留尾部，使每次对齐的文本量恒定（不随说话时长线性增长），避免 O(M^2) 对齐成本膨胀。
+// so here we keep a tail-limited window so the aligned text amount stays constant (not growing with speaking time), avoiding O(M^2) alignment blowup.
+// 此处限长保留尾部，使每次对齐的文本量恒定（不随说话时长线性增长），避免 O(M^2) 对齐成本膨胀
 let recWindow = ''
-const REC_WINDOW_KEEP = 700 // 保留尾部字符数，需 > alignForward 的 forward(300)+back(40) 冗余
+const REC_WINDOW_KEEP = 700 // Characters of tail to keep; must exceed alignForward's forward(300)+back(40) margin. / 保留尾部字符数，需 > alignForward 的 forward(300)+back(40) 冗余
 const toast = ref('')
+// Language-check result before speech starts: when non-null, show a confirm/notice dialog; speech has not really begun yet.
 // 语音开始前语言检查结果：非 null 时弹出确认/提醒对话框，尚未真正开始
 const langCheck = ref<SpeechLangCheck | null>(null)
 
+// Organize the check result into data the template can use directly (with translated labels), avoiding type-narrowing issues inside the template.
 // 将检查结果整理为模板可直接使用的展示数据（含已翻译的标签），避免模板内类型收窄问题
 const langCheckInfo = computed(() => {
   const c = langCheck.value
@@ -58,9 +63,12 @@ watch(speech.error, (v) => {
   }
 })
 
+// Speech recognition callback: the composable now returns only the "new final text since last time" (incremental).
 // 语音识别回调：composable 现只回传“自上次以来的新增 final 文本（增量）”。
-// 此处跨会话累积进限长滚动窗口，再在脚本当前位置附近的受限窗口内对齐，推进最新朗读到的位置。
-// 关键：对齐文本量恒定（≤ REC_WINDOW_KEEP），不再随说话时长增长，故长语音下成本恒定、不会膨胀。
+// Here we accumulate it cross-session into a tail-limited scroll window, then align within a restricted window near the script's current position, advancing the latest read position.
+// 此处跨会话累积进限长滚动窗口，再在脚本当前位置附近的受限窗口内对齐，推进最新朗读到的位置
+// Key: the aligned text amount is constant (<= REC_WINDOW_KEEP), no longer grows with speaking time, so the cost stays constant under long speech without blowup.
+// 关键：对齐文本量恒定（≤ REC_WINDOW_KEEP），不再随说话时长增长，故长语音下成本恒定、不会膨胀
 function handleText(text: string) {
   recWindow += text
   if (recWindow.length > REC_WINDOW_KEEP) {
@@ -76,13 +84,18 @@ function handleText(text: string) {
   })
   console.log('[APP:handleText] matchedNorm %d -> %d (%s)', before, after, after > before ? 'ADVANCED' : 'STAYED')
   state.matchedNorm = after
+  // Once final is confirmed, if the live preview had advanced ahead due to interim mis-recognition, fall back to the confirmed position to avoid a permanent lead.
   // final 已确认：若实时预览曾因 interim 误识别而超前，在此回落到已确认位置，避免长期超前
   if (state.liveNorm > state.matchedNorm) state.liveNorm = state.matchedNorm
 }
 
-// 实时预览回调：composable 回传尚未确认的 interim（实时、边说边变）文本。
+// Live-preview callback: the composable returns the not-yet-confirmed interim (real-time, changing while speaking) text.
+// 实时预览回调：composable 回传尚未确认的 interim（实时、边说边变）文本
+// Align "confirmed tail + current interim" within the same tail-limited window, advancing liveNorm from the confirmed position,
 // 把“已确认尾部 + 当前 interim”在相同限长窗口内对齐，从已确认位置向前推进 liveNorm，
-// 使光标在你说话的过程中就跟着走，而不是等一句话 final（换气后）才跟上。
+// so the cursor follows along while you speak, instead of waiting for a sentence's final (after a breath).
+// 使光标在你说话的过程中就跟着走，而不是等一句话 final（换气后）才跟上
+// For smoothness: liveNorm only advances forward, never retreats, and never goes below the confirmed position (avoid screen moving backward from interim jitter).
 // 为保证顺滑：liveNorm 只向前推进、不回退，且不低于已确认位置（避免 interim 抖动造成画面后退）。
 function handleLive(interim: string) {
   if (!interim) return
@@ -100,15 +113,19 @@ function handleLive(interim: string) {
   if (state.liveNorm < state.matchedNorm) state.liveNorm = state.matchedNorm
 }
 
-// 语音模式下，[暂停] 必须真正停止识别引擎，否则暂停期间说话仍会通过回调
-// 推进 matchedNorm/liveNorm，使光标继续前进、恢复时大幅跳变。
-// 恢复时重启引擎，从已确认位置继续跟随。
+// In speech mode, [Pause] must truly stop the recognition engine; otherwise speaking during pause still advances matchedNorm/liveNorm via callbacks,
+// 语音模式下，[暂停] 必须真正停止识别引擎，否则暂停期间说话仍会通过回调推进 matchedNorm/liveNorm，
+// making the cursor keep moving and jump drastically on resume.
+// 使光标继续前进、恢复时大幅跳变
+// On resume, restart the engine and continue following from the confirmed position.
+// 恢复时重启引擎，从已确认位置继续跟随
 watch(
   () => state.paused,
   (paused) => {
     if (state.mode !== 'speech' || !state.running) return
     if (paused) {
       speech.stop()
+      // Discard the unconfirmed live-preview position before pausing, so the cursor does not rest on a mis-recognized spot after resume.
       // 丢弃暂停前未确认的实时预览位置，避免恢复后光标停留在误识别处
       if (state.liveNorm > state.matchedNorm) state.liveNorm = state.matchedNorm
     } else {
@@ -128,6 +145,7 @@ function start() {
     setTimeout(() => (toast.value = ''), 4000)
     return
   }
+  // Speech-following: validate the script language before starting, to avoid the user speaking in the wrong or a mixed language.
   // 语音跟随：开始前先校验文稿语言，避免用户用错语言或混语言口播
   if (state.mode === 'speech') {
     const res = checkSpeechLanguage(state.script, state.recLang)
@@ -147,16 +165,18 @@ function doStart() {
   panelShownBeforeStart = showPanel.value
   state.running = true
   state.paused = false
-  showPanel.value = false // 开始后自动隐藏设置面板，进入纯净口播视图
+  showPanel.value = false // Auto-hide the settings panel after starting, entering a clean speaking view. / 开始后自动隐藏设置面板，进入纯净口播视图
   if (state.mode === 'speech') speech.start(handleText, state.recLang, handleLive)
 }
 
+// Dialog "back to select": close the dialog and expand the settings panel so the user can change the language.
 // 弹窗“返回选择”：关闭对话框并展开设置面板，方便用户改语言
 function backToSelect() {
   langCheck.value = null
   showPanel.value = true
 }
 
+// Dialog "continue start": the user knows the risk but still wants to start.
 // 弹窗“继续开始”：用户已知晓风险仍要开始
 function continueStart() {
   langCheck.value = null
@@ -171,13 +191,16 @@ function stop() {
   state.liveNorm = 0
   state.interimText = ''
   recWindow = ''
+  // If the panel was hidden before stopping (usually auto-hidden by start), restore it to the pre-start shown state;
   // 停止前若面板处于隐藏状态（通常由开始自动隐藏所致），则还原到开始前的展示状态；
-  // 若停止前面板已展开（用户运行中手动展开过），则保持展开，不恢复。
+  // if the panel was already expanded before stopping (the user expanded it during running), keep it expanded and do not restore.
+  // 若停止前面板已展开（用户运行中手动展开过），则保持展开，不恢复
   if (!showPanel.value) {
     showPanel.value = panelShownBeforeStart
   }
 }
 
+// ===== Drag a txt document in to import the script =====
 // ===== 拖入 txt 文档导入文稿 =====
 const isDragging = ref(false)
 

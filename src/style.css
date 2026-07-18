@@ -17,6 +17,7 @@ button {
   font-family: inherit;
 }
 
+/* ===== Theme variables (default dark) ===== */
 /* ===== 主题变量（默认深色） ===== */
 :root {
   --bg-app: #0b0d12;

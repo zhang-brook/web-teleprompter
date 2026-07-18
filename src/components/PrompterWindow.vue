@@ -9,9 +9,11 @@ const rootRef = ref<HTMLElement | null>(null)
 const viewportRef = ref<HTMLElement | null>(null)
 const contentRef = ref<HTMLElement | null>(null)
 
+// Float-like modes (float / screen-float): the window is shown as a draggable floating window by coordinates/size.
 // 浮窗类模式（float / screen-float）：窗口按坐标/尺寸作为可拖拽浮窗展示
 const isFloatLike = computed(() => state.windowMode === 'float' || state.windowMode === 'screen-float')
 
+// Window modes: float-like uses coordinates/size; window-fullscreen and screen-fullscreen fill the parent container.
 // 窗口模式：浮窗类按坐标/尺寸；窗口全屏与屏幕全屏填满父容器
 const pwStyle = computed(() => {
   if (isFloatLike.value) {
@@ -26,13 +28,16 @@ const pwStyle = computed(() => {
 })
 const pwClass = computed(() => 'pw mode-' + state.windowMode)
 
+// Root container: in screen / screen-float mode it acts as the fullscreen background layer and the request target for real fullscreen;
 // 根容器：screen / screen-float 模式下作为全屏背景层并作为真实全屏请求目标；
+// in other modes it is just a static wrapper that does not interfere with the float's absolute positioning relative to .stage.
 // 其余模式下仅为静态包裹，不干扰浮窗相对 .stage 的绝对定位
 const rootClass = computed(() => {
   if (state.windowMode === 'screen' || state.windowMode === 'screen-float') return 'pw-root mode-' + state.windowMode
   return 'pw-root'
 })
 const rootStyle = computed(() => {
+  // Fullscreen float: the root fills the screen and serves as a black background, with the inner float hovering above it.
   // 全屏浮窗：根容器铺满全屏并作为黑底背景，内部浮窗悬浮其上
   if (state.windowMode === 'screen-float') return { background: state.background }
   return {}
@@ -40,22 +45,27 @@ const rootStyle = computed(() => {
 
 const chars = ref<{ i: number; c: string }[]>([])
 
+// Scroll state.
 // 滚动状态
-const autoScroll = ref(0) // 自动滚动基准（固定速度累加 / 语音目标缓动）
-const userOffset = ref(0) // 鼠标/触摸额外偏移，保持
-const userOffsetTarget = ref(0) // 偏移目标值，滚轮缓动逼近它
-const targetScroll = ref(0) // 语音模式目标位置
+const autoScroll = ref(0) // Auto-scroll base (fixed-speed accumulation / speech-target easing). / 自动滚动基准（固定速度累加 / 语音目标缓动）
+const userOffset = ref(0) // Extra offset from mouse/touch, held. / 鼠标/触摸额外偏移，保持
+const userOffsetTarget = ref(0) // Offset target value, approached by wheel easing. / 偏移目标值，滚轮缓动逼近它
+const targetScroll = ref(0) // Speech-mode target position. / 语音模式目标位置
 const spans = ref<HTMLElement[]>([])
 let prevIdx = -1
 
+// Max pixels moved per single wheel notch (adjustable in settings), so one notch does not fly far away and lose the position.
 // 单次滚轮最多移动像素（可在设置中调整），避免一滚就飞很远找不到位置
 function wheelStep(): number {
   return Math.max(1, state.wheelStep || 80)
 }
 
+// Scroll range: symmetric around the read line, so both the first and last lines can cross it.
 // 滚动范围：围绕朗读线对称，保证首尾文字都能越过朗读线
-// 下限为负：内容顶部可滚到朗读线下方（首行文字完全到线下面）
-// 上限超过内容底部：内容底部可滚到朗读线上方（尾行文字完全过线才结束）
+// Lower bound is negative: the content top can scroll below the read line (first line fully beneath it).
+// 下限为负：内容顶部可滚到朗读线下方（首行文字完全到线下面）。
+// Upper bound exceeds the content bottom: the content bottom can scroll above the read line (last line only ends after fully crossing).
+// 上限超过内容底部：内容底部可滚到朗读线上方（尾行文字完全过线才结束）。
 function scrollBounds() {
   const vh = viewportRef.value?.clientHeight ?? 0
   const ch = contentRef.value?.scrollHeight ?? 0
@@ -65,7 +75,9 @@ function scrollBounds() {
   return { min, max }
 }
 
+// Allow a little extra scrolling beyond the content bounds, to avoid a dead zone where "after scrolling to start/end you cannot keep scrolling the other way".
 // 内容边界外再允许额外滚动一点，避免“滚到开始/结束位置后无法继续反向滚动”的死区
+// (lo/hi are the total user-scrollable position range; autoScroll stays within [min, max] and never auto-scrolls into the blank area.)
 // （lo/hi 是用户可滚动的总位置范围，autoScroll 仍被限制在 [min, max] 内，不会自动滚进空白区）
 function relaxedBounds() {
   const { min, max } = scrollBounds()
@@ -74,6 +86,7 @@ function relaxedBounds() {
   return { min, max, lo: min - overscroll, hi: max + overscroll }
 }
 
+// Watch script changes (including the "remove blank lines" toggle) and rebuild the character and span caches.
 // 监听脚本变化（含“移除连续空白行”开关），重建字符与 span 缓存
 watch(
   () => displayScript.value,
@@ -129,7 +142,9 @@ function applyHighlight(newIdx: number) {
   prevIdx = newIdx
 }
 
-// 语音匹配位置变化时，更新目标滚动位置（对齐到朗读线）
+// When the speech-matched position changes, update the target scroll position (aligned to the read line).
+// 语音匹配位置变化时，更新目标滚动位置（对齐到朗读线）。
+// Use the live-preview position liveNorm so scrolling follows during speaking, instead of waiting for a sentence's final.
 // 使用实时预览位置 liveNorm，使滚动在说话过程中就跟随，而非等一句话 final 才跟上
 watch(
   () => state.liveNorm,
@@ -146,6 +161,7 @@ watch(
   },
 )
 
+// Reset scrolling on start/stop.
 // 开始/停止时重置滚动
 watch(
   () => state.running,
@@ -155,13 +171,16 @@ watch(
       userOffsetTarget.value = 0
       targetScroll.value = 0
       resetHighlight()
+      // Start below the read line: set the auto-scroll base to the lower bound so the first line begins beneath the read line.
       // 从朗读线下方开始：自动滚动基准设为下限，使首行文字初始就在朗读线之下
       nextTick(() => {
         collectSpans()
         autoScroll.value = scrollBounds().min
       })
     } else {
+      // After stopping, return to the initial position with "first line below the read line", consistent with the static state right after load,
       // 停止后回到「首行在朗读线下方」的初始位置，与刚加载完时的静止态一致，
+      // so manual browsing before starting also begins near the read line and scrolls downward.
       // 便于未开始时手动浏览也能从朗读线附近开始向下阅读
       autoScroll.value = scrollBounds().min
       userOffset.value = 0
@@ -171,6 +190,7 @@ watch(
   },
 )
 
+// ===== Animation loop =====
 // ===== 动画循环 =====
 let raf = 0
 let last = performance.now()
@@ -192,10 +212,13 @@ function tick(now: number) {
   if (autoScroll.value > max) autoScroll.value = max
   if (autoScroll.value < min) autoScroll.value = min
 
+  // Mouse/touch offset eases toward its target (no abrupt jump).
   // 鼠标/触摸偏移缓动逼近目标值（不直接跳变）
   const ke = 1 - Math.exp(-dt / 140)
   userOffset.value += (userOffsetTarget.value - userOffset.value) * ke
+  // Limit the offset relative to the auto-scroll position so the total stays within [lo, hi]:
   // 相对自动滚动位置限制偏移，使总位置落在 [lo, hi]：
+  // avoids treating the relative offset as an absolute position when clipping, which would create a dead zone where "the wheel gains but the view does not move".
   // 避免把相对偏移错当成绝对位置来裁剪而产生“滚轮有增益但画面不动”的死区
   const { lo, hi } = relaxedBounds()
   const loU = lo - autoScroll.value
@@ -211,6 +234,7 @@ function tick(now: number) {
     contentRef.value.style.transform = `translateY(${-total}px)`
   }
 
+  // Highlight the current position.
   // 高亮当前位置
   let idx: number
   if (state.mode === 'speech') {
@@ -225,6 +249,7 @@ function tick(now: number) {
   raf = requestAnimationFrame(tick)
 }
 
+// ===== Mouse wheel / touch extra scrolling (offset held, browsable even before starting) =====
 // ===== 鼠标滚轮 / 触摸额外滚动（偏移保持，未开始时也可滚动浏览）=====
 function clampOffsetTarget() {
   const { lo, hi } = relaxedBounds()
@@ -236,14 +261,17 @@ function clampOffsetTarget() {
 
 function onWheel(e: WheelEvent) {
   e.preventDefault()
+  // Normalize scroll amounts across different deltaModes (pixel/line/page); otherwise wheels returning "line" in Firefox etc.
   // 归一化不同 deltaMode 的滚动量（像素/行/页），否则 Firefox 等按“行”返回的滚轮
-  // deltaY 只有个位数，乘以 wheelStep 截断后几乎不动，表现为“增益没反应”
+  // have a single-digit deltaY that, after multiplying by wheelStep and truncating, barely moves and looks like "no gain response".
+  // deltaY 只有个位数，乘以 wheelStep 截断后几乎不动，表现为“增益没反应”。
   let d = e.deltaY
   if (e.deltaMode === 1) {
     d *= Math.max(16, state.fontSize * state.lineHeight)
   } else if (e.deltaMode === 2) {
     d *= viewportRef.value?.clientHeight ?? 800
   }
+  // Limit the single move and accumulate into the target, approached by the animation loop's easing.
   // 限制单次位移，并累加到目标值由动画循环缓动逼近
   const step = wheelStep()
   d = Math.max(-step, Math.min(step, d))
@@ -259,6 +287,7 @@ function onTouchStart(e: TouchEvent) {
 }
 function onTouchMove(e: TouchEvent) {
   e.preventDefault()
+  // Touch is a direct drag, followed immediately (target synced with current, easing has no side effect).
   // 触摸为直接拖拽，立即跟随（目标与当前同步，缓动无副作用）
   const val = touchStartOffset + (touchStartY - e.touches[0]!.clientY)
   userOffset.value = val
@@ -266,6 +295,7 @@ function onTouchMove(e: TouchEvent) {
   clampOffsetTarget()
 }
 
+// Inverse-transform screen coordinates back to stage-local coordinates (canceling rotation/flip), so read-line dragging is correct under any transform.
 // 将屏幕坐标反变换到 stage 本地坐标（抵消旋转/翻转），使朗读线拖拽在任意变换下都正确
 function localFromClient(clientX: number, clientY: number) {
   const vp = viewportRef.value!
@@ -288,6 +318,7 @@ function localFromClient(clientX: number, clientY: number) {
   return { y: p.y, h: H }
 }
 
+// Drag the read line to adjust its position (ratio of viewport height).
 // 拖拽朗读线调整其位置（视口高度比例）
 function startDragReadLine(e: PointerEvent) {
   e.preventDefault()
@@ -307,6 +338,7 @@ function startDragReadLine(e: PointerEvent) {
   window.addEventListener('pointerup', up)
 }
 
+// ===== Drag to move / resize =====
 // ===== 拖拽移动 / 缩放 =====
 function startDrag(e: PointerEvent) {
   if (!isFloatLike.value) return
@@ -347,6 +379,7 @@ function startResize(e: PointerEvent) {
   window.addEventListener('pointerup', up)
 }
 
+// Screen fullscreen / fullscreen float: request real fullscreen on enter, return to the corresponding non-fullscreen mode on exit.
 // 屏幕全屏 / 全屏浮窗：进入时请求真实全屏，退出时回到对应非全屏模式
 function syncFullscreen() {
   if (typeof document === 'undefined') return
@@ -362,7 +395,9 @@ function syncFullscreen() {
 watch(() => state.windowMode, syncFullscreen)
 
 onMounted(() => {
+  // Initial static state: place the first line below the read line (base set to the lower bound),
   // 初始静止态：将首行文案定位到朗读线下方（基准设为下限），
+  // rather than at the float's top, so text is not jammed against the very top of the window right after load.
   // 而非浮窗顶部，避免页面刚加载完时文字顶在窗口最上方
   autoScroll.value = scrollBounds().min
   nextTick(collectSpans)
@@ -426,8 +461,10 @@ function stop() {
             fontFamily: state.fontFamily,
             lineHeight: state.lineHeight,
             letterSpacing: state.letterSpacing + 'px',
+            // Always prevent very long words from overflowing the float: break only when necessary.
             // 始终防止超长单词溢出浮窗：必要时才断词
             overflowWrap: 'break-word',
+            // When checked, break English words across lines at the line end (break-all also breaks reliably under the per-char span structure).
             // 勾选时在行尾把英文单词拆开放两行（break-all 在逐字 span 结构下也能稳定断词）
             wordBreak: state.breakWords ? 'break-all' : 'normal',
           }"
@@ -474,6 +511,7 @@ function stop() {
   border: none;
   box-shadow: none;
 }
+/* Root container: in screen-fullscreen / fullscreen-float mode it acts as the fullscreen background layer and the request target for real fullscreen. */
 /* 根容器：屏幕全屏 / 全屏浮窗模式下作为全屏背景层，并作为真实全屏请求目标 */
 .pw-root.mode-screen,
 .pw-root.mode-screen-float {

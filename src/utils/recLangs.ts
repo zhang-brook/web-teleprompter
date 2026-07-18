@@ -1,4 +1,5 @@
-// 语音识别可选语言（BCP-47 标签，原生写法不随界面语言翻译）
+// Speech recognition languages supported by the app (BCP-47 codes, not translated with the UI locale).
+// 语音识别可选语言（BCP-47 标签，原生写法不随界面语言翻译）。
 export interface RecLang {
   value: string
   label: string
@@ -17,9 +18,12 @@ export const recLangs: RecLang[] = [
   { value: 'ru-RU', label: 'Русский' },
 ]
 
+// Mapping of each recognition language to its script family (used for a coarse comparison with the script's language).
 // 每种识别语言对应的“文字家族”（用于与文稿实际语言做粗粒度比对）。
+// Languages within the same family (e.g. en-US/en-GB, fr/de/es all use the Latin alphabet) cannot be told apart by script, so they share one family;
 // 同一文字家族内的语言（如 en-US/en-GB、fr/de/es 同属拉丁字母）无法靠脚本区分，
-// 故视为同一家族；中文（含简/繁）、日语、韩语、俄语各自独立。
+// Chinese (incl. simplified/traditional), Japanese, Korean and Russian each form their own family.
+// 故视为同一家族；中文（含简/繁）、日语、韩语、俄语各自独立
 export type ScriptFamily = 'han' | 'japanese' | 'korean' | 'cyrillic' | 'latin' | 'unknown'
 
 export const recLangFamily: Record<string, ScriptFamily> = {

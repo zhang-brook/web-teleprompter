@@ -19,7 +19,8 @@
 - **🔄 Turns to face you — flip & rotate any way** — Horizontal / vertical flip, plus one-tap 0° / 90° / 180° / 270° or any fine angle (0–359°). Whether your phone lies sideways, your prompter mirrors the text, or you read at an angle, the view rotates to face you.
 - **📍 Reading line + you always know where you are** — A reference line marks exactly where you are; drag it to any comfortable height (even mid-presentation). As you read, the current word is highlighted and text you've already passed gently fades, so you never lose your place.
 - **🖱️ Calm scrolling that never loses you** — Mouse-wheel scrolling is eased and capped per move, so it never jumps far away. You can also browse the script up/down before you even start.
-- **🪟 Use it your way — flexible window modes** — Floating window (drag anywhere, resize from the corner), window-fullscreen (fills the screen), or browser-fullscreen (nothing but the script).
+- **🪟 Use it your way — flexible window modes** — Floating window (drag anywhere, resize from the corner), window-fullscreen (fills the screen), browser-fullscreen (nothing but the script), or fullscreen-floating (a floating teleprompter over a clean black fullscreen — perfect for presenting).
+- **📐 Typography that fits your eyes** — Tune font size, **line spacing (1.0–3.0)**, **letter spacing (0–20px)**, font, and text/background color; one tap also cleans up repeated blank lines so the script stays tidy and easy to read.
 - **💾 Your setup is remembered** — Every setting auto-saves locally and survives refreshes; one-click JSON export/import keeps you seamless across devices and browsers.
 - **📄 Drop a `.txt` to import** — Drag a `.txt` script file straight onto the page and it becomes your teleprompter content instantly — no copy-paste needed.
 - **🌐 Built for the world** — Interface in 简体中文 / 繁體中文 / English; speech recognition in 10 languages (see below).
@@ -59,7 +60,7 @@ That's it. Everything else is optional tuning.
 - **Loading indicator** — A spinner shows while the speech engine is warming up, so you always know it's preparing.
 
 ### Reading aids
-- **Reading line** — Your current position snaps to a highlighted reference line; drag it up/down right inside the floating window while presenting.
+- **Reading line** — Your current position snaps to a highlighted reference line; drag it up/down right inside the floating window while presenting. You can also set its exact height (5%–95% from the top) in the settings panel.
 - **Read-position highlighting** — In both modes the word you're reading is highlighted and text you've already passed fades out, so your eyes always lock onto the right spot.
 - **Eased wheel scroll** — Smooth, capped scrolling that feels calm and never disorients; works **even before you start**, so you can review the script by mouse or touch.
 - **Touch / mouse drag to browse** — On mobile and desktop alike, just drag to look at context before or after.
@@ -68,14 +69,17 @@ That's it. Everything else is optional tuning.
 ### Layout & typography
 - **Fonts** — 5 built-in fonts (system default / sans / serif / kai / monospace), one tap to switch.
 - **Font size, text color, background color** — Tune size and contrast to whatever is most comfortable for your shoot.
+- **Line spacing & letter spacing** — Adjust line height (1.0–3.0) and letter spacing (0–20px) so the script is comfortable to read at any distance.
 - **Horizontal / vertical flip**.
 - **Rotation** — Quick 0° / 90° / 180° / 270°, or any fine angle (0–359°) to fit any shooting or placement.
 - **Break English words** — By default words wrap whole; enable it and a long word that doesn't fit at a line end can split across two lines instead of overflowing.
+- **Remove consecutive blank lines** — On by default; collapses repeated blank lines so you keep at most one between sections and the script stays tidy.
 
 ### Window & display
 - **Floating window** — Grab the title bar or the visible semi-transparent handle to move, drag the bottom-right corner to resize, place it anywhere on screen.
 - **Window-fullscreen** — Fills the main area without being squeezed by the settings panel.
 - **Browser-fullscreen** — Uses the real fullscreen API; hide every distraction, only the script remains.
+- **Fullscreen-floating** — Enter browser fullscreen but show the teleprompter as a floating window on a clean black background — great for presenting on a distraction-free stage.
 - **Theme** — Dark / Light / Follow system, auto-matching your OS.
 - **Auto-hide settings after start** — Enters a clean reading view; on desktop the panel can be collapsed/expanded anytime.
 - **Responsive by design** — Adapts to phone, tablet, and desktop; on narrow screens the settings panel becomes a slide-in drawer so the teleprompter never gets pushed off-screen.

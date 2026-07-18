@@ -10,7 +10,8 @@ export interface LocaleMeta {
   label: string
 }
 
-// 语言选择器里显示的语言名，按惯例用其原生写法（不随界面语言翻译）
+// Language names shown in the language switcher, written in their native form by convention (not translated with the UI locale).
+// 语言选择器里显示的语言名，按惯例用其原生写法（不随界面语言翻译）。
 export const locales: LocaleMeta[] = [
   { code: 'zh-CN', label: '简体中文' },
   { code: 'zh-TW', label: '繁體中文' },
@@ -32,7 +33,7 @@ function detectLocale(): Locale {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved === 'zh-CN' || saved === 'zh-TW' || saved === 'en') return saved
   } catch {
-    /* 忽略读取失败 */
+    /* ignore read failure / 忽略读取失败 */
   }
   const nav = typeof navigator !== 'undefined' ? navigator.language : 'en'
   const l = nav.toLowerCase()
@@ -58,7 +59,7 @@ export function setLocale(locale: Locale) {
   try {
     localStorage.setItem(STORAGE_KEY, locale)
   } catch {
-    /* 忽略写入失败 */
+    /* ignore write failure / 忽略写入失败 */
   }
   applyDoc()
 }
@@ -74,5 +75,6 @@ export function t(key: string, vars?: Record<string, string | number>): string {
   return s
 }
 
+// Sync the document title and <html lang> when the module loads
 // 模块加载时同步文档标题与 <html lang>
 applyDoc()
