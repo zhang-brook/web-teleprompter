@@ -113,27 +113,6 @@ function handleLive(interim: string) {
   if (state.liveNorm < state.matchedNorm) state.liveNorm = state.matchedNorm
 }
 
-// In speech mode, [Pause] must truly stop the recognition engine; otherwise speaking during pause still advances matchedNorm/liveNorm via callbacks,
-// 语音模式下，[暂停] 必须真正停止识别引擎，否则暂停期间说话仍会通过回调推进 matchedNorm/liveNorm，
-// making the cursor keep moving and jump drastically on resume.
-// 使光标继续前进、恢复时大幅跳变
-// On resume, restart the engine and continue following from the confirmed position.
-// 恢复时重启引擎，从已确认位置继续跟随
-watch(
-  () => state.paused,
-  (paused) => {
-    if (state.mode !== 'speech' || !state.running) return
-    if (paused) {
-      speech.stop()
-      // Discard the unconfirmed live-preview position before pausing, so the cursor does not rest on a mis-recognized spot after resume.
-      // 丢弃暂停前未确认的实时预览位置，避免恢复后光标停留在误识别处
-      if (state.liveNorm > state.matchedNorm) state.liveNorm = state.matchedNorm
-    } else {
-      speech.start(handleText, state.recLang, handleLive)
-    }
-  },
-)
-
 function start() {
   if (!state.script.trim()) {
     toast.value = t('toast.enterScriptFirst')
