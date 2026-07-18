@@ -15,6 +15,8 @@
   "toast.readFailed": "匯入失敗：無法讀取檔案",
   "speech.errorPrefix": "語音辨識：",
   "speech.unsupported": "目前瀏覽器不支援語音辨識（建議使用 Chrome / Edge）",
+  "speech.micDenied": "無法存取麥克風。請檢查是否已授予麥克風權限，並確認頁面透過 HTTPS 存取（Android Chrome 需要）。",
+  "speech.audioCapture": "無法擷取音訊，請檢查麥克風裝置是否被其他應用程式佔用。",
   "speech.loading": "語音辨識載入中……",
   "panel.script": "文稿",
   "panel.scriptPlaceholder": "在此輸入口播文稿……",

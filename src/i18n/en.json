@@ -15,6 +15,8 @@
   "toast.readFailed": "Import failed: could not read the file",
   "speech.errorPrefix": "Speech recognition: ",
   "speech.unsupported": "Speech recognition is not supported in this browser (use Chrome / Edge)",
+  "speech.micDenied": "Cannot access the microphone. Please grant microphone permission and make sure the page is served over HTTPS (required on Android Chrome).",
+  "speech.audioCapture": "Cannot capture audio. Please check whether the microphone is being used by another app.",
   "speech.loading": "Loading speech recognition…",
   "panel.script": "Script",
   "panel.scriptPlaceholder": "Type your teleprompter script here…",

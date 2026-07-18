@@ -41,6 +41,13 @@ export function useSpeechRecognition() {
   const interimText = ref('')
   const available = ref(supported)
 
+  // Detect mobile (Android/iOS). On Android Chrome the Web Speech API does NOT honor `continuous`,
+  // 检测移动端（安卓/iOS）。安卓 Chrome 上 Web Speech API 不支持 `continuous`，
+  // so every session ends after a short utterance/silence and must be restarted to keep following.
+  // 因此每段识别遇静音/气口就会结束，需要重启才能继续跟随。
+  const isMobile =
+    typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+
   let rec: SpeechRecognitionLike | null = null
   let onTextCb: ((text: string) => void) | null = null
   let onLiveCb: ((text: string) => void) | null = null
@@ -49,6 +56,19 @@ export function useSpeechRecognition() {
   let minLoadTimer: number | null = null // Timer that guarantees the minimum loading display duration. / 保证最短展示时长的定时器
   let incrementalAccum = '' // Cross-session buffer of "new final" text, fed back incrementally to the aligner (avoids re-sending the whole segment each time). / 跨会话累积的「新增 final」文本，作为增量回调给对齐逻辑（避免每次回传整段）
   let currentInterim = '' // Current interim text (display only, not used for alignment). / 当前 interim 文本（仅用于显示，不参与对齐）
+  let sessionStart = 0 // Timestamp when the current recognition session started (used to detect spurious quick-ending sessions). / 当前识别会话的启动时间戳（用于识别“瞬间结束”的空转会话）
+  let backoff = 0 // Consecutive count of quick-ending sessions; drives exponential backoff to break the mic-icon "crazy flashing" tight loop on Android. / 连续瞬间结束的次数，驱动指数退避以打破安卓上录音图标“狂闪”的紧循环
+
+  const BASE_RESTART_DELAY = isMobile ? 350 : 80 // Base delay before restarting; mobile needs more time to release the mic engine. / 重启前的基础延迟；移动端需要更多时间释放麦克风引擎
+  const QUICK_END_MS = 500 // A session shorter than this is treated as "did not really listen" (spurious). / 短于此时长的会话视为“没有真正在听”（空转）
+  const MAX_RESTART_DELAY = 3000 // Upper bound of backoff delay. / 退避延迟上限
+
+  // Fatal errors: never restart on these — they only produce endless flashing without ever working.
+  // 致命错误：遇到这些绝不重启——重启只会无限狂闪且永远无法工作。
+  const FATAL_ERRORS = new Set(['not-allowed', 'service-not-allowed', 'audio-capture'])
+  // Transient errors: expected during normal following (silence / auto session end); do not surface to the user.
+  // 瞬时错误：正常跟随过程中会出现（静音 / 会话自动结束）；不应作为错误提示给用户。
+  const TRANSIENT_ERRORS = new Set(['no-speech', 'aborted', 'network'])
 
   function clearRestart() {
     if (restartTimer !== null) {
@@ -87,13 +107,19 @@ export function useSpeechRecognition() {
     clearRestart()
     const Ctor = (window.SpeechRecognition || window.webkitSpeechRecognition)!
     rec = new Ctor()
-    rec.continuous = true
+    // Android Chrome ignores `continuous` (it always ends after a single utterance). Setting it true there
+    // 安卓 Chrome 会忽略 `continuous`（总是在一段话后结束）。在移动端设为 true
+    // can also make sessions terminate immediately; keep the auto-restart loop drive continuity on mobile instead.
+    // 反而可能让会话立即结束；移动端改由自动重启循环来维持连续性。
+    rec.continuous = !isMobile // true
     rec.interimResults = true
     rec.lang = lang || 'zh-CN'
+    backoff = 0
 
     rec.onstart = () => {
       console.log('[SR:onstart] recognition session started (fires on every restart)')
       // 识别会话已启动（每次重启都会触发）
+      sessionStart = performance.now()
       // The recognition engine is truly ready; end the loading state.
       // 识别引擎真正就绪，结束加载态
       endLoading()
@@ -139,8 +165,23 @@ export function useSpeechRecognition() {
 
     rec.onerror = (e: { error?: string }) => {
       console.log('[SR:onerror] error=%s', e.error)
-      error.value = e.error || 'speech-error'
+      const err = e.error || 'speech-error'
       hideLoading()
+      // Fatal errors (mic permission denied / capture failed): stop entirely. Restarting would only spawn an
+      // 致命错误（麦克风权限被拒 / 采集失败）：直接彻底停止。继续重启只会形成
+      // endless start→fail→restart loop, which is exactly what makes the tab's recording icon flash crazily on Android.
+      // “启动→失败→重启”的死循环，也正是安卓上标签页录音图标狂闪的根源。
+      if (FATAL_ERRORS.has(err)) {
+        error.value = err === 'audio-capture' ? t('speech.audioCapture') : t('speech.micDenied')
+        listening.value = false
+        clearRestart()
+        return
+      }
+      // Transient errors (no-speech / aborted / network) are normal during following; keep going without alarming the user.
+      // 瞬时错误（no-speech / aborted / network）在跟随过程中很正常；继续运行且不打扰用户。
+      if (!TRANSIENT_ERRORS.has(err)) {
+        error.value = err
+      }
     }
 
     rec.onend = () => {
@@ -153,15 +194,28 @@ export function useSpeechRecognition() {
       // So delay the restart to the next event loop.
       // 故延迟到下一轮事件循环再启动
       if (listening.value && rec) {
+        // If the session ended almost immediately, it likely never really listened (common on Android when the mic
+        // 若会话几乎瞬间结束，很可能根本没有真正在听（安卓上麦克风尚未就绪或引擎繁忙时常见），
+        // engine is busy / not ready). Back off exponentially so we don't hammer start() and cause the icon to flash crazily.
+        // 此时指数退避，避免疯狂调用 start() 导致录音图标狂闪。
+        const sessionDur = performance.now() - sessionStart
+        if (sessionDur < QUICK_END_MS) backoff++
+        else backoff = 0
+        const delay =
+          backoff > 0
+            ? Math.min(BASE_RESTART_DELAY * 2 ** (backoff - 1), MAX_RESTART_DELAY)
+            : BASE_RESTART_DELAY
+        console.log('[SR:onend] sessionDur=%dms backoff=%d -> restart in %dms', Math.round(sessionDur), backoff, delay)
         restartTimer = window.setTimeout(() => {
           restartTimer = null
           if (!listening.value || !rec) return
+          sessionStart = performance.now()
           try {
             rec.start()
           } catch {
             /* ignore duplicate-start exception / 忽略重复启动异常 */
           }
-        }, 80)
+        }, delay)
       } else {
         listening.value = false
       }
@@ -170,6 +224,7 @@ export function useSpeechRecognition() {
     listening.value = true
     loading.value = true
     loadStart = performance.now()
+    sessionStart = performance.now()
     error.value = ''
     try {
       rec.start()
@@ -186,6 +241,7 @@ export function useSpeechRecognition() {
     interimText.value = ''
     incrementalAccum = ''
     currentInterim = ''
+    backoff = 0
     onLiveCb = null
     if (rec) {
       try {
