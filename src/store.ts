@@ -69,8 +69,8 @@ function makeDefaults() {
     // 主题：dark / light / system
     theme: 'system' as 'dark' | 'light' | 'system',
 
-    // 窗口模式：float=浮窗，window=窗口全屏（填满主区域），screen=屏幕全屏
-    windowMode: 'float' as 'float' | 'window' | 'screen',
+    // 窗口模式：float=浮窗，window=窗口全屏（填满主区域），screen=屏幕全屏，screen-float=全屏浮窗（浏览器全屏但内部以浮窗展示）
+    windowMode: 'float' as 'float' | 'window' | 'screen' | 'screen-float',
 
     // 变换：水平翻转、垂直翻转、任意角度旋转
     flipH: false,

@@ -9,9 +9,12 @@ const rootRef = ref<HTMLElement | null>(null)
 const viewportRef = ref<HTMLElement | null>(null)
 const contentRef = ref<HTMLElement | null>(null)
 
-// 窗口模式：浮窗按比例/坐标；窗口全屏与屏幕全屏填满父容器
+// 浮窗类模式（float / screen-float）：窗口按坐标/尺寸作为可拖拽浮窗展示
+const isFloatLike = computed(() => state.windowMode === 'float' || state.windowMode === 'screen-float')
+
+// 窗口模式：浮窗类按坐标/尺寸；窗口全屏与屏幕全屏填满父容器
 const pwStyle = computed(() => {
-  if (state.windowMode === 'float') {
+  if (isFloatLike.value) {
     return {
       left: state.win.x + 'px',
       top: state.win.y + 'px',
@@ -22,6 +25,18 @@ const pwStyle = computed(() => {
   return { left: '0', top: '0', width: '100%', height: '100%' }
 })
 const pwClass = computed(() => 'pw mode-' + state.windowMode)
+
+// 根容器：screen / screen-float 模式下作为全屏背景层并作为真实全屏请求目标；
+// 其余模式下仅为静态包裹，不干扰浮窗相对 .stage 的绝对定位
+const rootClass = computed(() => {
+  if (state.windowMode === 'screen' || state.windowMode === 'screen-float') return 'pw-root mode-' + state.windowMode
+  return 'pw-root'
+})
+const rootStyle = computed(() => {
+  // 全屏浮窗：根容器铺满全屏并作为黑底背景，内部浮窗悬浮其上
+  if (state.windowMode === 'screen-float') return { background: state.background }
+  return {}
+})
 
 const chars = ref<{ i: number; c: string }[]>([])
 
@@ -294,7 +309,7 @@ function startDragReadLine(e: PointerEvent) {
 
 // ===== 拖拽移动 / 缩放 =====
 function startDrag(e: PointerEvent) {
-  if (state.windowMode !== 'float') return
+  if (!isFloatLike.value) return
   e.preventDefault()
   const sx = e.clientX
   const sy = e.clientY
@@ -332,10 +347,10 @@ function startResize(e: PointerEvent) {
   window.addEventListener('pointerup', up)
 }
 
-// 屏幕全屏：进入时请求真实全屏，退出时回到窗口模式
+// 屏幕全屏 / 全屏浮窗：进入时请求真实全屏，退出时回到对应非全屏模式
 function syncFullscreen() {
   if (typeof document === 'undefined') return
-  if (state.windowMode === 'screen') {
+  if (state.windowMode === 'screen' || state.windowMode === 'screen-float') {
     const el = rootRef.value
     if (el && !document.fullscreenElement) {
       el.requestFullscreen?.().catch(() => {})
@@ -347,14 +362,15 @@ function syncFullscreen() {
 watch(() => state.windowMode, syncFullscreen)
 
 onMounted(() => {
-// 初始静止态：将首行文案定位到朗读线下方（基准设为下限），
+  // 初始静止态：将首行文案定位到朗读线下方（基准设为下限），
   // 而非浮窗顶部，避免页面刚加载完时文字顶在窗口最上方
   autoScroll.value = scrollBounds().min
   nextTick(collectSpans)
   syncFullscreen()
   document.addEventListener('fullscreenchange', () => {
-    if (!document.fullscreenElement && state.windowMode === 'screen') {
-      state.windowMode = 'window'
+    if (!document.fullscreenElement) {
+      if (state.windowMode === 'screen') state.windowMode = 'window'
+      else if (state.windowMode === 'screen-float') state.windowMode = 'float'
     }
   })
   const vp = viewportRef.value!
@@ -383,15 +399,15 @@ function stop() {
 </script>
 
 <template>
-  <div
-    ref="rootRef"
-    :class="pwClass"
-    :style="{ ...pwStyle, background: state.background }"
-  >
-    <div class="pw-header" @pointerdown="startDrag">
-      <span class="pw-title">{{ t('prompter.title') }}</span>
-      <div v-if="state.windowMode === 'float'" class="pw-drag-handle" @pointerdown="startDrag" :title="t('prompter.dragHandle')"></div>
-      <div class="pw-ctrls">
+  <div ref="rootRef" :class="rootClass" :style="rootStyle">
+    <div
+      :class="pwClass"
+      :style="{ ...pwStyle, background: state.background }"
+    >
+      <div class="pw-header" @pointerdown="startDrag">
+        <span class="pw-title">{{ t('prompter.title') }}</span>
+        <div v-if="isFloatLike" class="pw-drag-handle" @pointerdown="startDrag" :title="t('prompter.dragHandle')"></div>
+        <div class="pw-ctrls">
         <button v-if="state.running" @pointerdown.stop @click="togglePause">
           {{ state.paused ? t('action.resume') : t('action.pause') }}
         </button>
@@ -432,7 +448,8 @@ function stop() {
       </div>
     </div>
 
-    <div v-if="state.windowMode === 'float'" class="pw-resize" @pointerdown="startResize" :title="t('prompter.resize')"></div>
+      <div v-if="isFloatLike" class="pw-resize" @pointerdown="startResize" :title="t('prompter.resize')"></div>
+    </div>
   </div>
 </template>
 
@@ -457,8 +474,11 @@ function stop() {
   border: none;
   box-shadow: none;
 }
-.pw.mode-screen {
+/* 根容器：屏幕全屏 / 全屏浮窗模式下作为全屏背景层，并作为真实全屏请求目标 */
+.pw-root.mode-screen,
+.pw-root.mode-screen-float {
   position: fixed;
+  inset: 0;
   z-index: 9999;
 }
 .pw-header {

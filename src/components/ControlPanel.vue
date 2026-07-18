@@ -200,6 +200,7 @@ function onImportFile(e: Event) {
         <button :class="{ active: state.windowMode === 'float' }" @click="state.windowMode = 'float'">{{ t('windowMode.float') }}</button>
         <button :class="{ active: state.windowMode === 'window' }" @click="state.windowMode = 'window'">{{ t('windowMode.window') }}</button>
         <button :class="{ active: state.windowMode === 'screen' }" @click="state.windowMode = 'screen'">{{ t('windowMode.screen') }}</button>
+        <button :class="{ active: state.windowMode === 'screen-float' }" @click="state.windowMode = 'screen-float'">{{ t('windowMode.screenFloat') }}</button>
       </div>
       <button class="wide" style="margin-top: 8px" @click="resetWin">{{ t('panel.resetWin') }}</button>
       <p class="hint">{{ t('panel.floatHint') }}</p>
