@@ -1,3 +1,5 @@
+dedupePeers: true
+
 overrides:
   'vue': 'beta'
   '@vue/compiler-core': 'beta'
