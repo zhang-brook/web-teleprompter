@@ -11,6 +11,9 @@ export default defineConfig({
   // it also works for local dev and preview, so no need to distinguish environments.
   // 本地开发与预览同样适用，无需区分环境。
   base: './',
+  server: {
+    host: '0.0.0.0',
+  },
   plugins: [
     vue(),
     vueDevTools(),
